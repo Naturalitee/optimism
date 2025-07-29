@@ -11,7 +11,7 @@ class DSticker { //Persists in a position before leaving.
     document.addEventListener('tick', this.behavior);
   }
   nextframe(){
-    this.animf += 1
+    this.animf += 1;
   }
 
   behavior(){
@@ -64,7 +64,7 @@ class DMover { //Starts on one of the edges and moves until it reaches the other
     this.direction = direction;
     this.grace = 2;
     this.active = false;
-    this.behavior = this.behavior.bind(this)
+    this.behavior = this.behavior.bind(this);
     document.addEventListener('tick', this.behavior);
   }
   
@@ -170,11 +170,11 @@ class DSweeper { //Encompasses a whole column or row.
     this.grace = 2;
     this.animf = 0;
     this.active = false;
-    this.behavior = this.behavior.bind(this)
+    this.behavior = this.behavior.bind(this);
     document.addEventListener('tick', this.behavior);
   }
   nextframe(){
-    this.animf += 1
+    this.animf += 1;
   }
 
   behavior(){
@@ -257,11 +257,11 @@ class DCollect { //If you dont collect it before timer runs out you die
     this.y = posy;
     this.duration = duration;
     this.active = true;
-    this.behavior = this.behavior.bind(this)
+    this.behavior = this.behavior.bind(this);
     document.addEventListener('tick', this.behavior);
   }
   nextframe(){
-    this.animf += 1
+    this.animf += 1;
   }
 
   behavior(){
@@ -285,9 +285,7 @@ class DCollect { //If you dont collect it before timer runs out you die
   }
 
   safe(){ //they collected it
-    collectsfx.pause();
-    collectsfx.currentTime = 0;
-    collectsfx.play();
+    audiohandler.play("collect", "sfx")
     killme(this);
   }
 
@@ -426,4 +424,62 @@ class DStalker{ //Follows the Player.
         ctx.fillRect(posx + (inc - size) / 2, posy + (inc - size) / 2, size ,size);
         }
   }
+}
+
+class ShadowMe{ //Mix-up. Trails behind the player
+    constructor(posx, posy){
+        this.x = posx;
+        this.y = posy;
+        this.active = false;
+        this.moves = [];
+    }
+
+    draw(ctx, inc){
+        if (this.active == true){
+            let posx = GLOBAL_OFFSET + (this.x * inc - (inc / 2));
+            let posy = GLOBAL_OFFSET + (this.y * inc - (inc / 2));
+            ctx.lineWidth = 5;
+            ctx.strokeStyle = `rgb(118, 118, 118)`;
+            ctx.beginPath();
+            ctx.arc(posx, posy, 20, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = `rgb(0, 0, 255)`;
+            ctx.fill();
+            ctx.fillStyle = `rgba(255, 255, 255, 1)`;
+            ctx.font = `56px Fira Sans`;
+            ctx.textAlign = "center";
+            ctx.fillText(".",posx - 7.5, posy - 5);
+            ctx.fillText(".",posx + 7.5, posy - 5);
+            ctx.translate(posx, posy);
+            ctx.rotate(Math.PI/2 + Math.PI);
+            ctx.font = `28px Arial`;
+            ctx.fillText(")",-5, 7.5);
+            ctx.setTransform(1, 0, 0, 1, 0, 0);
+        }
+        else {
+            let posx = GLOBAL_OFFSET + (this.x * inc - (inc / 2));
+            let posy = GLOBAL_OFFSET + (this.y * inc - (inc / 2));
+            ctx.lineWidth = 0;
+            ctx.strokeStyle = `rgba(137, 137, 137, 0)`;
+            ctx.beginPath();
+            ctx.arc(posx, posy, 20, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle =  `rgba(0, 0, 255, .4)`;
+            ctx.fill();
+        }
+    }
+
+    behavior(){
+        if (this.moves.length == 5){
+            this.active = true;
+            this.x = this.moves[0][0];
+            this.y = this.moves[0][1];
+            this.moves.splice(0,1);
+            this.moves.push([PlayerPos[0],PlayerPos[1]]);
+
+        }
+        else{
+            this.moves.push([PlayerPos[0],PlayerPos[1]]);
+        }
+    }
 }

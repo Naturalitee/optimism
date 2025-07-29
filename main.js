@@ -1,29 +1,14 @@
-function volumecontrol(direction){
-    if (direction == "up" && globalvol != 1){
-        globalvol += 0.100;
-    }
-    else if (direction == "down" && globalvol != 0){
-        globalvol -= 0.100;
-    }
-    globalvol = Number(globalvol.toFixed(1));
-    bgm.volume = globalvol * silence;
-    hurtsfx.volume = globalvol;
-    collectsfx.volume = globalvol;
-    revealsfx.volume = globalvol;
-}
 
 function increasetempo(){
     pulp.active = true;
     bpm += 5;
     clearInterval(Interval);
     Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
-    if (attacknum != 1){bgm.src = `./sound/bgm/main0${Randint(6)+1}.mp3`}
+    if (attacknum != 1){var bgm = `main${Randint(6)+1}`}
+    else {bgm = `main1`}
     punishpause = false;
-    bgm.pause();
-    bgm.currentTime = 0;
-    bgm.playbackRate = bpm/120;
-    bgm.volume = globalvol * silence;
-    bgm.play();
+    audiohandler.volumecontrol();
+    audiohandler.play(bgm, "bgm");
     punishpause = true;
 }
 
@@ -183,7 +168,7 @@ function mainloop() { //draw everything
         if (clickgrace != 0){clickgrace -= 1}
         if (transitiontime && transition != 100){
             transition += 1
-            bgm.volume = globalvol * silence * (1 - transition/100);
+            audiohandler.volumecontrol();
         }
         if (transition == 100){gtransitionstart()}
         ctx.fillStyle = `rgba(255, 255, 255, 1)`;
@@ -226,11 +211,8 @@ function mainloop() { //draw everything
             text = "back to menu";
             ctx.fillText(text, 25+(increment*9 - ctx.measureText(text).width)/ 2,550);
         }
-        if (startup % 90 == 0){revealsfx.play()}
-        if (startup == 270){
-            bgm.src = "./sound/bgm/title_theme.mp3"
-            bgm.play();
-        }
+        if (startup % 90 == 0){audiohandler.play("reveal", "sfx")}
+        if (startup == 270){audiohandler.play("titletheme", "bgm")}
         if (startup != 271){startup += 1}
         textanimtick += 1;
         if (textanimtick == 30){
@@ -243,11 +225,6 @@ function mainloop() { //draw everything
         ctx.font = "36px Comic Sans MS";
         text = "do u not like the music? :(";
         ctx.fillText(text, 25+(increment*9 - ctx.measureText(text).width)/ 2,350);
-        if (bgm.ended){
-            bgm.currentTime = 0;
-            bgm.playbackRate = 0.5 + Math.random() * 3;
-            bgm.play();
-        }
     }
     if (screenstate == "game"){
         DrawHazards(ctx, increment);
@@ -284,7 +261,7 @@ function mainloop() { //draw everything
             timelooking -= 1;
             if (timelooking == 0){looking = [0,0]}
         }
-        if (bgm.paused && punishpause){
+        if (secret){
             death();
             punishpaus();
         }
@@ -299,10 +276,10 @@ document.addEventListener("mousedown", ClickDetec)
 function ClickDetec(e){
     const canvas = document.getElementById("Canvas");
     foo = canvas.getBoundingClientRect();
-    if (screenstate == "warning" && (e.clientX >= foo.x && e.clientX <= foo.x + foo.width) && (e.clientY >= foo.y && e.clientY <= foo.y + foo.height)){
+    if (screenstate == "warning" && (e.clientX >= foo.x && e.clientX <= foo.x + foo.width) && (e.clientY >= foo.y && e.clientY <= foo.y + foo.height)){  
+        audiohandler.audioctx.resume();
         screenstate = "menu";
-        bgm.src = "./sound/bgm/title_theme.mp3";
-        bgm.play();
+        audiohandler.play("titletheme", "bgm")
     }
     let cx = (e.clientX - foo.left) * (canvas.width / foo.width);
     let cy = (e.clientY - foo.top) * (canvas.height / foo.height);
@@ -317,7 +294,7 @@ function KeyPress(e){
         }
     }
     if (["-", "=", "_", "+"].includes(e.key)){
-        ((e.key == "-" || e.key == "_") ? volumecontrol("down") : volumecontrol("up"));
+        ((e.key == "-" || e.key == "_") ? audiohandler.volumecontrol("down") : audiohandler.volumecontrol("up"));
     }
 }
 
@@ -559,65 +536,87 @@ class Mixer{ //its for the mixups
     }
 }
 
-class ShadowMe{
-    constructor(posx, posy){
-        this.x = posx;
-        this.y = posy;
-        this.active = false;
-        this.moves = [];
+class AudioHandler{
+    constructor(){
+        this.audioctx = new AudioContext()
+        this.bgms = {};
+        this.sfxs = {};
+        this.sfxlist = ["yummy", "invert", "shadow", "big", "ghost", "reveal", "collect", "hurt"];
+        this.currentbgm = null;
+        this.index = -1;
+        this.volume = this.audioctx.createGain();
+        this.volume.gain.value = globalvol * silence;
+        this.volume.connect(this.audioctx.destination);
+        this.makesounds();
     }
 
-    draw(ctx, inc){
-        if (this.active == true){
-            let posx = GLOBAL_OFFSET + (this.x * inc - (inc / 2));
-            let posy = GLOBAL_OFFSET + (this.y * inc - (inc / 2));
-            ctx.lineWidth = 5;
-            ctx.strokeStyle = `rgb(118, 118, 118)`;
-            ctx.beginPath();
-            ctx.arc(posx, posy, 20, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.fillStyle =  `rgb(0, 0, 255)`;
-            ctx.fill();
-            ctx.fillStyle =  `rgba(255, 255, 255, 1)`;
-            ctx.font = `56px Fira Sans`;
-            ctx.textAlign = "center";
-            ctx.fillText(".",posx - 7.5, posy - 5);
-            ctx.fillText(".",posx + 7.5, posy - 5);
-            ctx.translate(posx, posy);
-            ctx.rotate(Math.PI/2 + Math.PI);
-            ctx.font = `28px Arial`;
-            ctx.fillText(")",-5, 7.5);
-            ctx.setTransform(1, 0, 0, 1, 0, 0);
+    async makesounds(){
+        await this.instbgm();
+        await this.instsfx();
+    }
+
+    async instbgm(){
+        for (let i = 1; i < BGMCOUNT; i++){ //for the game bgm
+            await this.createsound(`main${i}`, `./sound/bgm/main${i}.mp3`, this.bgms);
         }
-        else {
-            let posx = GLOBAL_OFFSET + (this.x * inc - (inc / 2));
-            let posy = GLOBAL_OFFSET + (this.y * inc - (inc / 2));
-            ctx.lineWidth = 0;
-            ctx.strokeStyle = `rgba(137, 137, 137, 0)`;
-            ctx.beginPath();
-            ctx.arc(posx, posy, 20, 0, Math.PI * 2);
-            ctx.stroke();
-            ctx.fillStyle =  `rgba(0, 0, 255, .4)`;
-            ctx.fill();
+        await this.createsound("titletheme", `./sound/bgm/title_theme.mp3`, this.bgms); 
+        await this.createsound("countin", `./sound/bgm/countin.mp3`, this.bgms); 
+        await this.createsound("tsktsktsk", `./sound/bgm/tsktsktsk.mp3`, this.bgms);
+    }
+
+    async createsound(name, url, destination){
+            let audiofile = await fetch(url);
+            let arrayBuffer = await audiofile.arrayBuffer();
+            let audioBuffer = await this.audioctx.decodeAudioData(arrayBuffer);
+            destination[name] = audioBuffer;
+    }
+
+    async instsfx(){ 
+        this.sfxlist.forEach(async (item) => await this.createsound(`${item}`, `./sound/sfx/${item}.mp3`, this.sfxs))
+    }
+
+
+    play(name, type){
+        if (this.currentbgm && type == "bgm"){this.stopBGM()};
+        const sound = this.audioctx.createBufferSource();
+        sound.buffer = type == "bgm" ? this.bgms[name] : this.sfxs[name];
+        if (type == "bgm"){
+            sound.loop = true;
+            sound.playbackRate.value = soundspeed;
+        };
+        sound.connect(this.volume);
+        sound.start();
+        if (type == "bgm"){this.currentbgm = sound};
+        if (type !== "bgm") {
+            sound.addEventListener("ended", () => sound.disconnect());
         }
     }
 
-    behavior(){
-        if (this.moves.length == 5){
-            this.active = true;
-            this.x = this.moves[0][0];
-            this.y = this.moves[0][1];
-            this.moves.splice(0,1);
-            this.moves.push([PlayerPos[0],PlayerPos[1]]);
+    stopBGM(){
+        this.currentbgm.stop();
+        this.currentbgm.disconnect();
+        this.currentbgm = null;
+    }
 
-        }
-        else{
-            this.moves.push([PlayerPos[0],PlayerPos[1]]);
+    createsfxobject(iname){
+        return {
+            name: iname,
+            src: new Audio(`./sound/sfx/${iname}.mp3`)
         }
     }
+
+    volumecontrol(direction){
+    if (direction == "up" && globalvol != 1){
+        globalvol += 0.1;
+    }
+    else if (direction == "down" && globalvol != 0){
+        globalvol -= 0.1;
+    }
+    globalvol = Number(globalvol.toFixed(1));
+    this.volume.gain.value = globalvol * silence * (1 - transition/100);
 }
 
-//Hazards Section
+}
 
 Dangers = []; //array containing all active hazards
 function killme(object){
@@ -626,7 +625,7 @@ function killme(object){
     Dangers.splice(victim, 1)
 }
 
-//Mechanics Section
+
 
 function EqCheck(a, b) {
     return a.every((val, index) => val === b[index]);}
@@ -686,7 +685,7 @@ function HitReg(){
 }
 function death(){
     clearInterval(Interval);
-    bgm.pause();
+    audiohandler.stopBGM();
     hurtcd = 0;
     ishurt = false;
     silence = 1;
@@ -697,16 +696,12 @@ function death(){
 
 function punishpaus(){
     screenstate = "punishment";
-    bgm.src = "./sound/bgm/tsktsktsk.mp3";
-    bgm.loop = false;
-    bgm.preservesPitch = false;
-    bgm.playbackRate = 0.5 + Math.random() * 2;
-    bgm.play();
+    audiohandler.play("tsktsktsk", "bgm")
 }
 
 function hurt(){
     if (!ishurt){
-    hurtsfx.play();
+    audiohandler.play("hurt", "sfx")
     ishurt = true;
     hurtcd = 180;
     playeropac = 0.6;
@@ -721,7 +716,6 @@ function hurt(){
 function start(){
     transitiontime = false;
     transition = 0;
-    bgm.src = "./sound/bgm/main01.mp3"
     bpm -= 5;
     increasetempo();
     let lives = document.getElementById("lifecontainer")
@@ -743,21 +737,21 @@ function gtransitionstart(){
     beat = 0;
     startup = 0;
     hp = 5;
+    transition = 0;
     attacknum = 1;
     playeropac = 1;
     variant = "none";
-    bgm.pause();
+    audiohandler.stopBGM();
     bpm = 120;
     screenstate = "game";
-    bgm.src = "./sound/bgm/countin.mp3";
-    bgm.volume = globalvol * silence;
-    bgm.play();
+    audiohandler.volumecontrol();
+    audiohandler.play("countin", "bgm")
     Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
 }
 
 let pulp = new Pulse();
 let mixer = new Mixer();
-
+let audiohandler = new AudioHandler();
 
 
 
