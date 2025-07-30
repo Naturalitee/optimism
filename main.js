@@ -741,7 +741,7 @@ function start(){
         lives.appendChild(img);
     }
     screenstate = "game";
-    attacker.load(15); //Randint(40)+1
+    attacker.load(Randint(40)+1);
     pulp.active = true;
 }
 

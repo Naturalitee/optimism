@@ -8,5 +8,22 @@ Optimism is an arcade-esque endless "game" where you dodge obstacles that are sy
 
 If you really want to, you can play the game [here.](https://naturalitee.github.io/optimism/)
 
+-----------
+<h1 align="center">Current Update</h1>
+
+
+<p align="center">v1.1</p>
+<pre>
+> Reworked the whole audio system.
+> As a side effect, all the music is now pitched. oops!
+> Added loading screen.
+> Nerfed attacks 15, 24 ,26, and 27.
+> Reworked attack 14, it was pretty stupid.
+> Also Reworked/Nerfed attack 15, it was very overwhelming even at base speed.
+> Pause bug is now gone. Punishment is no longer needed. rip old punishment screen :(
+</pre>
+
+
+
 
 
