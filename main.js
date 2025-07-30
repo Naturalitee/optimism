@@ -6,10 +6,10 @@ function increasetempo(){
     Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
     if (attacknum != 1){var bgm = `main${Randint(6)+1}`}
     else {bgm = `main1`}
-    punishpause = false;
+    soundspeed = bpm/BASEBPM;
+    console.log(bgm)
     audiohandler.volumecontrol();
     audiohandler.play(bgm, "bgm");
-    punishpause = true;
 }
 
 function Randint(max) {
@@ -164,13 +164,28 @@ function mainloop() { //draw everything
         text = 'click anywhere to continue.';
         ctx.fillText(text, 25+(increment*9 - ctx.measureText(text).width)/ 2, 600);
     }
+    if (screenstate == "loading"){
+        ctx.fillStyle = "rgba(255, 255, 255, 1)";
+        ctx.font = "64px Comic Sans MS"
+        let text = "Loading...";
+        ctx.fillText(text, 25+(increment*9 - ctx.measureText(text).width)/ 2, 350);
+        ctx.font = "36px Comic Sans MS"
+        text = `${loadedsounds}/${SOUNDCOUNT}`;
+        ctx.fillText(text, 25+(increment*9 - ctx.measureText(text).width)/ 2, 500);
+        if (loadedsounds/SOUNDCOUNT == 1){
+            screenstate = "warning";
+        }
+    }
     if (screenstate == "menu"){
         if (clickgrace != 0){clickgrace -= 1}
         if (transitiontime && transition != 100){
-            transition += 1
+            transition += 1;
+            musicfade += 1;
             audiohandler.volumecontrol();
         }
-        if (transition == 100){gtransitionstart()}
+        if (transition == 100){
+            gtransitionstart();
+        }
         ctx.fillStyle = `rgba(255, 255, 255, 1)`;
         let title = textanim == 1 ? TITLE1 : TITLE2;
         ctx.drawImage(title, 40+(increment*9 - title.width)/ 2, -230+(title.height/2));
@@ -223,7 +238,7 @@ function mainloop() { //draw everything
     if (screenstate == "punishment"){
         ctx.fillStyle = "rgb(255,255,255)";
         ctx.font = "36px Comic Sans MS";
-        text = "do u not like the music? :(";
+        text = "RIP old punishment screen :(";
         ctx.fillText(text, 25+(increment*9 - ctx.measureText(text).width)/ 2,350);
     }
     if (screenstate == "game"){
@@ -260,10 +275,6 @@ function mainloop() { //draw everything
         if (looking[1] != 0){ //for little eye movements
             timelooking -= 1;
             if (timelooking == 0){looking = [0,0]}
-        }
-        if (secret){
-            death();
-            punishpaus();
         }
         mixer.drawspeedup(ctx, increment)
         HitReg();
@@ -556,7 +567,7 @@ class AudioHandler{
     }
 
     async instbgm(){
-        for (let i = 1; i < BGMCOUNT; i++){ //for the game bgm
+        for (let i = 1; i <= BGMCOUNT; i++){ //for the game bgm
             await this.createsound(`main${i}`, `./sound/bgm/main${i}.mp3`, this.bgms);
         }
         await this.createsound("titletheme", `./sound/bgm/title_theme.mp3`, this.bgms); 
@@ -569,6 +580,7 @@ class AudioHandler{
             let arrayBuffer = await audiofile.arrayBuffer();
             let audioBuffer = await this.audioctx.decodeAudioData(arrayBuffer);
             destination[name] = audioBuffer;
+            loadedsounds += 1;
     }
 
     async instsfx(){ 
@@ -583,6 +595,7 @@ class AudioHandler{
         if (type == "bgm"){
             sound.loop = true;
             sound.playbackRate.value = soundspeed;
+            sound.preserve
         };
         sound.connect(this.volume);
         sound.start();
@@ -613,7 +626,7 @@ class AudioHandler{
         globalvol -= 0.1;
     }
     globalvol = Number(globalvol.toFixed(1));
-    this.volume.gain.value = globalvol * silence * (1 - transition/100);
+    this.volume.gain.value = globalvol * silence * (1 - musicfade/100);
 }
 
 }
@@ -689,6 +702,8 @@ function death(){
     hurtcd = 0;
     ishurt = false;
     silence = 1;
+    bpm = 120;
+    soundspeed = bpm/BASEBPM;
     for (let i = Dangers.length - 1; i >= 0; i--){killme(Dangers[i])}
     startup = 0;
     screenstate = "gameover";
@@ -726,18 +741,18 @@ function start(){
         lives.appendChild(img);
     }
     screenstate = "game";
-    attacker.load(Randint(40)+1);
+    attacker.load(15); //Randint(40)+1
     pulp.active = true;
 }
 
 function gtransitionstart(){
+    musicfade = 0;
     attacker.tick = 0;
     attacker.pattern = 0;
     PlayerPos = [5,5]
     beat = 0;
     startup = 0;
     hp = 5;
-    transition = 0;
     attacknum = 1;
     playeropac = 1;
     variant = "none";
@@ -749,10 +764,12 @@ function gtransitionstart(){
     Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
 }
 
+function rippunish(){
+    death();
+    punishpaus();
+}
+
 let pulp = new Pulse();
 let mixer = new Mixer();
 let audiohandler = new AudioHandler();
-
-
-
 
