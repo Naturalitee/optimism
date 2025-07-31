@@ -7,7 +7,6 @@ function increasetempo(){
     if (attacknum != 1){var bgm = `main${Randint(6)+1}`}
     else {bgm = `main1`}
     soundspeed = bpm/BASEBPM;
-    console.log(bgm)
     audiohandler.volumecontrol();
     audiohandler.play(bgm, "bgm");
 }
@@ -15,10 +14,10 @@ function increasetempo(){
 function Randint(max) {
   let output = Math.floor(Math.random() * max);
   if (output == max){
-    return output - 1
+    return output - 1;
   }
   else{
-    return output
+    return output;
   }
 }
 
@@ -43,7 +42,7 @@ function DrawMe(ctx, inc){
     let posy = GLOBAL_OFFSET + (PlayerPos[1] * inc - (inc / 2));
     ctx.beginPath();
     ctx.arc(posx, posy, 20*mixer.scale, 0, Math.PI * 2);
-    ctx.strokeStyle = `rgba(137,137,137,${playeropac})`
+    ctx.strokeStyle = `rgba(137,137,137,${playeropac})`;
     if (mixer.visible == false){ctx.strokeStyle = "rgba(0,0,0,0)"}
     ctx.stroke();
     if (variant == "inverted"){ctx.fillStyle =  `rgba(174, 255, 0, ${playeropac})`;} //inverted
@@ -131,7 +130,7 @@ function DrawMeFace(posx, posy, ctx){
 
 function DrawHazards(ctx, inc){ //draw objects that hurt
     Dangers.forEach(function(item){
-        item.draw(ctx, inc)
+        item.draw(ctx, inc);
     })
 }
 
@@ -383,7 +382,7 @@ class Mixer{ //its for the mixups
         this.scale = 1;
         this.behavior = this.behavior.bind(this);
         this.swoop = 0;
-        this.pickedvariant = "none"
+        this.pickedvariant = "none";
         this.variants = ["shadowme", "big", "inverted", "disco", "pulse", "silent", "healthup", "strikes"]
         document.addEventListener('tick', this.behavior);
     }
@@ -562,8 +561,10 @@ class AudioHandler{
     }
 
     async makesounds(){
-        await this.instbgm();
-        await this.instsfx();
+        await Promise.all([
+            this.instbgm(),
+            this.instsfx()
+        ]);
     }
 
     async instbgm(){
@@ -711,7 +712,7 @@ function death(){
 
 function punishpaus(){
     screenstate = "punishment";
-    audiohandler.play("tsktsktsk", "bgm")
+    audiohandler.play("tsktsktsk", "bgm");
 }
 
 function hurt(){
@@ -720,9 +721,9 @@ function hurt(){
     ishurt = true;
     hurtcd = 180;
     playeropac = 0.6;
-    let life = document.getElementById("lifecontainer")
+    let life = document.getElementById("lifecontainer");
     life.lastElementChild.remove();
-    let lives = document.getElementById("lifecontainer")
+    let lives = document.getElementById("lifecontainer");
     let hp = lives.children.length;
     if (hp == 0){death()}
     }
@@ -733,7 +734,7 @@ function start(){
     transition = 0;
     bpm -= 5;
     increasetempo();
-    let lives = document.getElementById("lifecontainer")
+    let lives = document.getElementById("lifecontainer");
     for (i = 1; i <= hp; i++){
         const img = document.createElement('img');
         img.src = "./assets/life.png";
@@ -749,7 +750,7 @@ function gtransitionstart(){
     musicfade = 0;
     attacker.tick = 0;
     attacker.pattern = 0;
-    PlayerPos = [5,5]
+    PlayerPos = [5,5];
     beat = 0;
     startup = 0;
     hp = 5;
@@ -760,7 +761,7 @@ function gtransitionstart(){
     bpm = 120;
     screenstate = "game";
     audiohandler.volumecontrol();
-    audiohandler.play("countin", "bgm")
+    audiohandler.play("countin", "bgm");
     Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
 }
 

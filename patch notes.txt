@@ -1,3 +1,8 @@
+/v1.1.1/
+> Made loading a bit faster.
+> Fixed some small minor things to document.
+> Added another thing to patch notes text woahhhhh.
+
 //v1.1//
 > Reworked the whole audio system.
 > As a side effect, all the music is now pitched. oops!
