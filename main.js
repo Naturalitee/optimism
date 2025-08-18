@@ -783,6 +783,7 @@ function gtransitionstart(){
     attacker.pattern = 0;
     PlayerPos = [5,5];
     beat = 0;
+    tickfrequency = 1;
     startup = 0;
     starthp = 5;
     attacknum = 1;
