@@ -65,6 +65,8 @@ class DMover { //Starts on one of the edges and moves until it reaches the other
     this.grace = 2;
     this.active = false;
     this.behavior = this.behavior.bind(this);
+    this.fq = tickfrequency;
+    this.fqtick = tickfrequency;
     document.addEventListener('tick', this.behavior);
   }
   
@@ -75,7 +77,8 @@ class DMover { //Starts on one of the edges and moves until it reaches the other
             this.active = true;
         }
     }
-    else{
+    else if (this.fq == this.fqtick){
+        this.fqtick = 1;
         switch(this.direction){
             case "Up":
                 this.y -= 1;
@@ -102,6 +105,9 @@ class DMover { //Starts on one of the edges and moves until it reaches the other
                 console.log("something broke lil bro")
                 break;
         }
+    }
+    else{
+        this.fqtick += 1;
     }
   }
 
@@ -425,6 +431,111 @@ class DStalker{ //Follows the Player.
         }
   }
 }
+
+class Indicator{ //Non-collide indicators (also literally anything that should exist but should be colliedable ig)
+    constructor(type, posx, posy, duration) {
+    this.x = posx;
+    this.y = posy;
+    this.duration = duration;
+    this.type = type;
+    this.active = this.type != "heart" ? false : true;
+    this.behavior = this.behavior.bind(this);
+    this.playsound(type);
+    document.addEventListener('tick', this.behavior);
+  }
+
+  playsound(type){
+    switch (type){
+        case "warp":
+            audiohandler.play("warp", "sfx");
+            break;
+        case "heart":
+            audiohandler.play("heartstart", "sfx");
+            break;
+        default:
+            //uwawa
+            break;
+    }
+  }
+
+  behavior(){
+    if (this.type == "heart"){
+        if (Dangers[Dangers.length-1] != this && attacker.tick < 31){
+            let selfindex = Dangers.indexOf(this);
+            if (selfindex !== 1){
+            let temp = Dangers[selfindex];
+            Dangers[selfindex] = Dangers[Dangers.length - 1];
+            Dangers[Dangers.length - 1] = temp;
+            }
+        }
+        this.heartmovement(["left","up","down","right"][Randint(4)]);
+        }
+    this.duration -= 1;
+    if (this.duration == 0){
+        killme(this);
+    }
+    }
+
+    safe(){
+        audiohandler.play("heartget", "sfx")
+        healed = 10;
+        hpup();
+        killme(this);
+    }
+
+  heartmovement(direction){
+    switch (direction){
+        case "left":
+        if (this.x - 1 != 0){
+            this.x -= 1;
+        }
+        else{this.heartmovement(["left","up","down","right"][Randint(4)])}
+        break;  
+        case "up":
+        if (this.y - 1 != 0){
+            this.y -= 1;
+        }
+        else{this.heartmovement(["left","up","down","right"][Randint(4)])}
+        break;
+        case "right":
+        if (this.x + 1 != 10){
+            this.x += 1;
+        }
+        else{this.heartmovement(["left","up","down","right"][Randint(4)])}
+        break;
+        case "down":
+        if (this.y + 1 != 10){
+            this.y += 1;
+        }
+        else{this.heartmovement(["left","up","down","right"][Randint(4)])}
+        break;
+    }
+  }
+
+  draw(ctx, inc){
+    let posx = GLOBAL_OFFSET + (this.x - 1) * inc;
+    let posy = GLOBAL_OFFSET + (this.y - 1) * inc;
+    switch (this.type){
+        case "warp":
+            posx = GLOBAL_OFFSET + (this.x * inc - (inc / 2));
+            posy = GLOBAL_OFFSET + (this.y * inc - (inc / 2));
+            ctx.lineWidth = 0;
+            ctx.strokeStyle = `rgba(137, 137, 137, 0)`;
+            ctx.beginPath();
+            ctx.arc(posx, posy, 20, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle =  `rgba(230, 0, 255, 0.4)`;
+            ctx.fill();
+            break;
+        case "heart":
+            ctx.drawImage(HEART, posx, posy, inc, inc)
+            break;
+            
+    }
+  }
+
+}
+
 
 class ShadowMe{ //Mix-up. Trails behind the player
     constructor(posx, posy){

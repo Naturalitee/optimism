@@ -70,6 +70,36 @@ h2{
     color: white;
 }
 
+#tabs{
+    display: flex;
+    justify-content: center;
+    gap: 20%;
+}
+
+button{
+    border: 4px solid white;
+    border-radius: 5px;
+    background-color: black;
+    font-size: 48px;
+    text-align: center;
+    color: white;
+    font-family: Comic Sans MS;
+}
+
+button:active{
+    border: 4px solid black;
+    background-color: white;
+    color: black;
+}
+
+#hazards{
+    display: none;
+}
+
+#mechanics{
+    display: none;
+}
+
 .container{
     display: flex;
     justify-content: space-between;

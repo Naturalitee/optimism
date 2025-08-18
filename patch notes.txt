@@ -1,3 +1,13 @@
+//v1.2//
+> Added 10 new attacks!
+> Adjusted most attacks that had Collectors.
+> Added an indicator for player warps.
+> Every 10 attacks, a heart now appears. Collecting that heart will replenish 1 health.
+> The max health is now 10.
+> Updated attack 40 a bit.
+> Updated the Help Tab underneath the main game. It now has two tabs for looking at hazards and the other mechanics of the game.
+> did some cleanup I guess that was cool.
+
 /v1.1.1/
 > Made loading a bit faster.
 > Fixed some small minor things to document.

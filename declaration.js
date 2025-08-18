@@ -1,12 +1,15 @@
 //im shoving them all in here
+var currenttab = "none";
 var PlayerPos = [5, 5];
 var bpm = 120;
-var hp = 5;
+var starthp = 5;
+var hp = 0;
+var healed = 0
 const tick = new CustomEvent('tick');
 const GLOBAL_OFFSET = 25;
 const BASEBPM = 120;
 var Interval = 0;
-var fps = setInterval(() => mainloop(), 16.67) //60fps
+var fps = setInterval(() => mainloop(), 16.67); //60fps
 var variant = "none";
 var ishurt = false;
 var isinterlude = false;
@@ -21,7 +24,7 @@ var globalvol = 1;
 var screenstate = "loading";
 let attacker = new bobby();
 BGMCOUNT = 6;
-SFXCOUNT = 8;
+SFXCOUNT = 11;
 SOUNDCOUNT = BGMCOUNT + SFXCOUNT + 3; //3 denotes special bgm
 var loadedsounds = 0;
 var soundspeed = bpm/BASEBPM
@@ -33,7 +36,7 @@ var musicfade = 0; //its a transition, for the ears!
 var transitiontime = false; //is it time to transition?
 var clickgrace = 10;
 var silence = 1;
-var punishpause = true; //punish pausing
+var tickfrequency = 1;
 const TITLE1 = new Image();
 TITLE1.src = "./assets/title1.png";
 const TITLE2 = new Image();
@@ -46,6 +49,8 @@ const GAMEOVER1 = new Image();
 GAMEOVER1.src = "./assets/gameover1.png";
 const GAMEOVER2 = new Image();
 GAMEOVER2.src = "./assets/gameover2.png";
+const HEART = new Image();
+HEART.src = "./assets/heart.png"
 const PLAYBOX = {
     x1: 264,
     y1: 294, 

@@ -134,6 +134,18 @@ function DrawHazards(ctx, inc){ //draw objects that hurt
     })
 }
 
+function BorderColor(){
+    if (healed != 0){
+        return `rgb(0,255,0)`
+    }
+    else if (hurtcd >= 170){
+        return `rgb(255,0,0)`
+    }
+    else{
+        return `rgb(137,137,137)`
+    }
+}
+
 function mainloop() { //draw everything
     const screen = document.getElementById("Canvas");
     let ctx = screen.getContext("2d");
@@ -145,7 +157,7 @@ function mainloop() { //draw everything
     let x = 0;
     DrawBackground(ctx, maxx, maxy);
     ctx.lineWidth = 5;
-    ctx.strokeStyle = hurtcd >= 170 ? `rgba(255, 0, 0, 1)` : `rgb(137, 137, 137)`;
+    ctx.strokeStyle = BorderColor();
     ctx.strokeRect(22.5,22.5,maxx-45,maxy-45);
     if (screenstate == "warning"){
         ctx.fillStyle = "rgba(255, 0, 0, 1)";
@@ -270,6 +282,9 @@ function mainloop() { //draw everything
                 ishurt = false;
                 playeropac = 1;
             }
+        }
+        if (healed != 0){
+            healed -= 1;
         }
         if (looking[1] != 0){ //for little eye movements
             timelooking -= 1;
@@ -451,14 +466,7 @@ class Mixer{ //its for the mixups
             silence = 0;
         }
         if (variant == "healthup"){
-        let life = document.getElementById("lifecontainer")
-        let hp = life.children.length;
-        if (hp < 6){
-            const img = document.createElement('img');
-            img.src = "./assets/life.png";
-            img.alt = 'life';
-            lives.appendChild(img);
-        }
+            hpup();
         }
     }
 
@@ -551,7 +559,7 @@ class AudioHandler{
         this.audioctx = new AudioContext()
         this.bgms = {};
         this.sfxs = {};
-        this.sfxlist = ["yummy", "invert", "shadow", "big", "ghost", "reveal", "collect", "hurt"];
+        this.sfxlist = ["yummy", "invert", "shadow", "big", "ghost", "reveal", "collect", "hurt", "warp", "heartstart", "heartget"];
         this.currentbgm = null;
         this.index = -1;
         this.volume = this.audioctx.createGain();
@@ -667,7 +675,7 @@ function HitReg(){
                         }   
                     }
                     break;
-                case item instanceof DCollect:
+                case checkcollect(item):
                     collecthere.push([item.x, item.y])
                     break;
                 case item instanceof DSticker:
@@ -691,11 +699,15 @@ function HitReg(){
     }
     if (collecthere.some(itm => EqCheck(itm, PlayerPos))){
         Dangers.forEach(function(item){
-            if (item.x == PlayerPos[0] && item.y == PlayerPos[1] && item instanceof DCollect){
+            if (item.x == PlayerPos[0] && item.y == PlayerPos[1]){
                 item.safe();
             }
         })
     }
+}
+
+function checkcollect(item){
+    return (item instanceof DCollect || (item instanceof Indicator && item.type == "heart"));
 }
 function death(){
     clearInterval(Interval);
@@ -721,28 +733,47 @@ function hurt(){
     ishurt = true;
     hurtcd = 180;
     playeropac = 0.6;
-    let life = document.getElementById("lifecontainer");
-    life.lastElementChild.remove();
     let lives = document.getElementById("lifecontainer");
-    let hp = lives.children.length;
+    if (hp <= 5){
+        lives.lastElementChild.remove();
+    }
+    else{
+        const target = lives.children[hp-6];
+        target.style.filter = 'hue-rotate(0deg)';
+    }
+    hp -= 1;
     if (hp == 0){death()}
     }
 }
 
+function hpup(type){
+    if (hp != 10){
+        hp += 1;
+        let lives = document.getElementById("lifecontainer");
+        if (hp <= 5){
+            const img = document.createElement('img');
+            img.src = "./assets/life.png";
+            img.alt = 'life';
+            lives.appendChild(img);
+        }
+        else{
+            const target = lives.children[hp - 6]
+            target.style.filter = 'hue-rotate(250deg)';
+        }
+    }
+}
+
 function start(){
+    hp = 0;
     transitiontime = false;
     transition = 0;
     bpm -= 5;
     increasetempo();
-    let lives = document.getElementById("lifecontainer");
-    for (i = 1; i <= hp; i++){
-        const img = document.createElement('img');
-        img.src = "./assets/life.png";
-        img.alt = 'life';
-        lives.appendChild(img);
+    for (i = 1; i <= starthp; i++){
+        hpup();
     }
     screenstate = "game";
-    attacker.load(Randint(40)+1);
+    attacker.load(Randint(50)+1);
     pulp.active = true;
 }
 
@@ -753,7 +784,7 @@ function gtransitionstart(){
     PlayerPos = [5,5];
     beat = 0;
     startup = 0;
-    hp = 5;
+    starthp = 5;
     attacknum = 1;
     playeropac = 1;
     variant = "none";
@@ -768,6 +799,16 @@ function gtransitionstart(){
 function rippunish(){
     death();
     punishpaus();
+}
+
+function switchto(tab){
+    var selectedtab = document.getElementById(tab);
+    if (currenttab != "none"){
+        var tabrn = document.getElementById(currenttab)
+    }
+     if (currenttab != "none"){tabrn.style.display = "none"};
+    selectedtab.style.display = "block";
+    currenttab = tab;
 }
 
 let pulp = new Pulse();
