@@ -787,6 +787,8 @@ function gtransitionstart(){
     startup = 0;
     starthp = 5;
     attacknum = 1;
+    attacker.randplus = 0;
+    attacker.randmax = 9;
     playeropac = 1;
     variant = "none";
     audiohandler.stopBGM();
@@ -815,4 +817,5 @@ function switchto(tab){
 let pulp = new Pulse();
 let mixer = new Mixer();
 let audiohandler = new AudioHandler();
+
 
