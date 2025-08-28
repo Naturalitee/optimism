@@ -1,3 +1,8 @@
+/v1.2.1/
+> Fixed an element not being centered properly (gross).
+> Fixed an issue where the movement frequency of certain hazards would not reset upon death.
+> did not do some cleanup that wasn't cool.
+
 //v1.2//
 > Added 10 new attacks!
 > Adjusted most attacks that had Collectors.
