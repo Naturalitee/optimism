@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <link rel="stylesheet" href="styles.css">
+        <meta charset="UTF+8">
+        <script src="./attacks.js"></script>
+        <script src="./hazards.js"></script>
+        <script src="./artful.js"></script>
+        <script src="./declaration.js"></script>
+        <script src="./main.js"></script>
+        <link rel="icon" type="image/png" href="./assets/icon.png">
+        <title>optimism.</title>
+    </head>
+    <body>
+        <script> <!--Background Randomizer-->
+            const randomX = Math.floor(Math.random() * 2000);
+            const randomY = Math.floor(Math.random() * 2000);
+            document.body.style.backgroundPosition = `${randomX}px ${randomY}px`;
+        </script>
+        <div class="gamearea">
+            <canvas id="Canvas"></canvas>
+            <div id="lifecontainer" class="lives">
+            </div>
+        </div>
+        <div id="adminpanel">
+            <p style="text-align: center">hi im kid named admin</p>
+            <p style="margin-bottom: 1px;">BPM</p>
+            <div class="container" style="justify-content: left;">
+                <input placeholder="Insert BPM here" id="BPMinput" style="font-size: 36px; width: 50%; color: white; background-color: black; border: 2px solid rgb(255, 255, 255); border-radius: 8px;">
+                <button onclick="(() => {
+                    const INPUT = document.getElementById('BPMinput');
+                    bpm = Number.isNaN(Number(INPUT.value)) ? 120 : Number(INPUT.value); 
+                    console.log(bpm);
+                    clearInterval(Interval);
+                    Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
+                })()">bpm</button>
+            </div>
+            <p style="margin-bottom: 1px;">Conjure Attack</p>
+            <div class="container" style="justify-content: left;">
+                <input placeholder="Insert attack here" id="attackinput" style="font-size: 36px; width: 50%; color: white; background-color: black; border: 2px solid rgb(255, 255, 255); border-radius: 8px;">
+                <button onclick="(() => {
+                    const INPUT = document.getElementById('attackinput');
+                    attacker.tick = 0;
+                    attacker.load(Number(INPUT.value));
+                })()">Attack!</button>
+            </div>
+            <p style="margin-bottom: 1px;">Conjure Mix-Up</p>
+            <div class="container" style="justify-content: left;">
+                <select id= "variantpicker" style="font-size: 24px; width: 50%; color: white; background-color: black; border: 2px solid rgb(255, 255, 255); border-radius: 8px;">
+                </select>
+                <button onclick="(() => {
+                    mixer.pickedvariant = document.getElementById(`variantpicker`).value;
+                    mixer.variantapplier();
+                })()">Mix!</button>
+                <button onclick="(() => {
+                    variant = `none`;
+                    mixer.reset();
+                })()">Unmix!</button>
+            </div>
+        </div>
+        <div id="instructions">
+            <h1>Help</h1>
+            <p id="htp">Use WASD to move. The game will speed up every 4 attacks. Occassionally, you may run into Mix-Ups that change up how you play the game and add an extra challenge.</p>
+            <div id="tabs">
+                <button onclick="switchto(`hazards`)">Hazards</button>
+                <button onclick="switchto(`mechanics`)">Game Mechanics</button>
+            </div>
+            <div id="hazards">
+                <div class="container">
+                    <div>
+                        <h2>Sticker</h2>
+                        <p>After a brief windup, the sticker will persist in a place for an amount of time. Running into it will damage you.</p>
+                    </div>
+                    <img src="./assets/info1.png" alt="Sticker">
+                </div>
+                <div class="container">
+                    <div>
+                        <h2>Mover</h2>
+                        <p>After a brief windup, the mover will move in the direction that its arrow is pointing at until it hits its respective wall. Running into it will also damage you.</p>
+                    </div>
+                    <img src="./assets/info2.png" alt="Mover">
+                </div>
+                <div class="container">
+                    <div>
+                        <h2>Timer</h2>
+                        <p>When spawned, the timer will immediately start counting down. If you fail to run into it before the timer goes out, you will take damage.</p>
+                    </div>
+                    <img src="./assets/info3.png" alt="Timer">
+                </div>
+                <div class="container">
+                    <div>
+                        <h2>Stalker</h2>
+                        <p>After a brief windup, the stalker will move towards you. You better start running. As always, running into it will damage you.</p>
+                    </div>
+                    <img src="./assets/info4.png" alt="Stalker">
+                </div>
+                <div class="container">
+                    <div>
+                        <h2>Sweeper</h2>
+                        <p>After a brief windup, the sweeper will encompass the whole row or column, persisting there for any amount of time. To no ones surprise, running into it will damage you.</p>
+                    </div>
+                    <img src="./assets/info5.png" alt="Sweeper">
+                </div>
+            </div>
+            <div id="mechanics"> 
+                <div class="container">
+                    <div>
+                        <h2>Healing Heart</h2>
+                        <p>Every 10th attack, a heart will be spawned unto the field. It moves erratically and can move through hazards too. Collecting this heart will restore 1 health to you. You can have up to 10 Health at any given time.</p>
+                    </div>
+                    <img src="./assets/minfo1.png" alt="Healing">
+                </div>
+                <div class="container">
+                    <div>
+                        <h2>Warps</h2>
+                        <p>If you hear a sort of charging sound, and you see a purple circle on the field, it means you're about to get warped. When the charging finishes you will be teleported to the purple square.</p>
+                    </div>
+                    <img src="./assets/minfo2.png" alt="Warping">
+                </div>
+            </div>
+        <div id="lg" ></div><img src="./assets/logo.png" alt="Optimism!" onclick="rippunish()" style="margin: auto; display: block;"></div>
+        </div>
+        <script> <!--Boy is too lazy to admin panel AHHHHH-->
+            const DROPDOWN = document.getElementById("variantpicker");
+            mixer.variants.forEach(i => {
+                const newOption = document.createElement("option");
+                newOption.textContent = i;
+                newOption.id = i;
+                DROPDOWN.appendChild(newOption);
+            })
+        </script>
+    </body>
+</html>
