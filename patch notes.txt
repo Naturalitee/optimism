@@ -1,3 +1,7 @@
+//v1.3//
+> Added 4 new audio tracks!
+> Added an Up Next tab so you can anticipate what comes next!
+
 /v1.2.1/
 > Fixed an element not being centered properly (gross).
 > Fixed an issue where the movement frequency of certain hazards would not reset upon death.

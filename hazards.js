@@ -448,7 +448,7 @@ class IHeal extends Indicator{ //Heals the player upon contact
     }
 }
 
-class IWarp extends Indicator{ //
+class IWarp extends Indicator{ //Teleports Plyaer.
     constructor(posx,posy,duration){
         super(posx, posy, duration);
         audiohandler.play("warp", "sfx");

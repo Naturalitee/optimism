@@ -2,8 +2,8 @@
 const TESTINGMODE = false;
 //FOR TESTING 
 
-//im shoving them all in here
-var currenttab = "none";
+//GAMEPLAY VARIABLES//
+var fps = setInterval(() => mainloop(), 16.67); //60fps
 var PlayerPos = [5, 5];
 var bpm = 120;
 var starthp = 5;
@@ -14,7 +14,6 @@ const GLOBAL_OFFSET = 25;
 const BASEBPM = 120;
 var Interval = 0;
 let SCREEN, CTX, INCREMENT, artful; //the 4 problem children
-var fps = setInterval(() => mainloop(), 16.67); //60fps
 var variant = "none";
 var ishurt = false;
 var isinterlude = false;
@@ -25,9 +24,10 @@ var startup = TESTINGMODE ? 5 : 0; //used for both intro and score anim
 var attacknum = 1;
 var looking = [0,0];
 var timelooking = 0;
+
+//MENU & BUTTONS//
 var globalvol = 1;
 var screenstate = TESTINGMODE ? "game" : "loading";
-let attacker = new bobby();
 BGMCOUNT = 6;
 SFXCOUNT = 11;
 SOUNDCOUNT = BGMCOUNT + SFXCOUNT + 3; //3 denotes special bgm
@@ -40,8 +40,17 @@ var transition = 0; //its a transition!
 var musicfade = 0; //its a transition, for the ears!
 var transitiontime = false; //is it time to transition?
 var clickgrace = 10;
-var silence = 1;
+var currenttab = "none";
+
+
+//ATTACKS//
+let attacker = new AttackLoader();
+const ATTACK_PATTERN_LENGTH = 33;
+const INTERLUDE_LENGTH = 17;
 var tickfrequency = 1;
+var silence = 1;
+
+//ASSET LOADING & HITREG LOADING//
 const TITLE1 = new Image();
 TITLE1.src = "./assets/title1.png";
 const TITLE2 = new Image();

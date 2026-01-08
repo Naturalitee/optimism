@@ -1,6 +1,7 @@
   var attack = "poop";
   var attacks = ""
   var ATTACK_COUNT = 0;
+  const WARP_COORDS = {14: [5,5], 17: [5,5], 23: [5,5], 36: [1,9], 38:[5,8], 39:[5,5], 40:[2,2], 44: [5,5], 49: [5,5]}
 
   function loadattacks(){
           fetch(
@@ -10,13 +11,13 @@
             .then((data) => {
               attack = data;
               attacks = attack.split("\n")
-              if ((attacks.length - 17) % 33 != 0){console.log("THERES SOMETHING WRONG BRO")}
-              ATTACK_COUNT = (attacks.length - 17) / 33;
+              if ((attacks.length - INTERLUDE_LENGTH) % ATTACK_PATTERN_LENGTH != 0){console.log("THERES SOMETHING WRONG BRO")}
+              ATTACK_COUNT = (attacks.length - INTERLUDE_LENGTH) / ATTACK_PATTERN_LENGTH;
             });
   }
 
   loadattacks();
-  class bobby {
+  class AttackLoader {
       constructor() {
       this.tick = 0;
       this.clbrt = 1;
@@ -25,6 +26,7 @@
       this.twoeightA = 0;
       this.twoeightB = 0;
       this.curattack = 0;
+      this.nextattack = 0;
       this.memory = 0;
       this.randmax = 9;
       this.randplus = 0; 
@@ -38,16 +40,27 @@
       }
 
       load(num){
-        this.curattack = num;
-        this.pattern = attacks.slice(0+(num-1)*33,33*num);
+        let input
+        if (this.curattack != 0) {
+        input = this.nextattack
+        this.nextattack = num;
+        this.curattack = input;
+        }
+        else{
+          input = num;
+          this.curattack = num;
+          this.nextattack = Randint(ATTACK_COUNT)+1
+        }
+        this.pattern = attacks.slice(0+(input-1)*ATTACK_PATTERN_LENGTH,ATTACK_PATTERN_LENGTH*input);
       }
+
       interpret(){
         if (startup == 5){
           if (this.pattern instanceof Array){
             this.tick += 1;
           }
-          if (this.pattern.length == 17){
-            if (this.tick == 17){
+          if (this.pattern.length == INTERLUDE_LENGTH){
+            if (this.tick == INTERLUDE_LENGTH){
               this.load(Randint(ATTACK_COUNT)+1);
               this.tick = 1;
               beat = 1;
@@ -58,13 +71,20 @@
             }
             else{this.clbrt *= -1}
           }
+          if ((this.tick == 30 && attacknum % 4 != 0) || (this.tick == 14 && isinterlude)){ //for warp indicators!
+            if (this.nextattack in WARP_COORDS){
+              console.log("yah!");
+              console.log(WARP_COORDS.toString(this.nextattack)[0])
+              Dangers.push(new IWarp(WARP_COORDS[this.nextattack][0],WARP_COORDS[this.nextattack][1], 3));
+            }
+          }
           if (this.tick == 32 && !TESTINGMODE){
             this.load(Randint(ATTACK_COUNT)+1);
             if ((variant == "shadowme" || variant == "strikes") && [14,15,39].includes(this.curattack)){
               this.load(38);
             }
           }
-          if (this.tick >= 33){
+          if (this.tick >= ATTACK_PATTERN_LENGTH){
             this.clearboard();
             if (!TESTINGMODE){
               this.clearboard();
@@ -75,7 +95,7 @@
                 artful.PulseActive = true;
               }
               else{
-                this.pattern = attacks.slice(0+(ATTACK_COUNT)*33,33*ATTACK_COUNT+17);
+                this.pattern = attacks.slice(0+(ATTACK_COUNT)*ATTACK_PATTERN_LENGTH,ATTACK_PATTERN_LENGTH*ATTACK_COUNT+INTERLUDE_LENGTH);
                 isinterlude = true;
                 this.tick = 1;
                 artful.PulseActive = true;
@@ -86,7 +106,7 @@
           let box = [];
           let dat = "";
           if ((this.curattack == false || this.pattern == false) && !TESTINGMODE){
-            this.pattern = attacks.slice(0,33);
+            this.pattern = attacks.slice(0,ATTACK_PATTERN_LENGTH);
             this.curattack = 1;
             console.warn("hey so it broke so heres attack 1 kthxbye")
           }

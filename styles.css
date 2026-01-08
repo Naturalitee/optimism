@@ -3,11 +3,13 @@ body {
     background-image: url("./assets/bg.jpg");
     background-blend-mode: multiply;
 }
+
 .gamearea{
     display: flex;
     flex-direction: row;
     justify-content: center;
     gap: 10px;
+    margin-right: 80px;
 }
 
 .lives{
@@ -26,6 +28,34 @@ body {
 .lives img{
     max-width: 100%;
     height: auto;
+}
+
+#misc-container{
+    display: flex;
+    flex-direction: column;
+    gap: 10px
+}
+
+#misc-container > div{
+    background-color: rgb(0,0,0);
+    border: 3px solid rgb(136, 136, 136);
+}
+
+#modifiers {
+    height: 350px;
+    margin-top: 40px;
+    padding: 20px;
+    width: 150px;
+}
+
+#up-next {
+    height: 150px;
+    padding: 10px;
+    width: 170px;
+}
+
+#up-next > p {
+    text-align: center;
 }
 
 #Canvas {

@@ -602,14 +602,7 @@ function hurt(){
     ishurt = true;
     hurtcd = 180;
     playeropac = 0.6;
-    let lives = document.getElementById("lifecontainer");
-    if (hp <= 5){
-        lives.lastElementChild.remove();
-    }
-    else{
-        const target = lives.children[hp-6];
-        target.style.filter = 'hue-rotate(0deg)';
-    }
+    RemoveHeart();
     hp -= 1;
     if (hp == 0){death()}
     }
@@ -618,17 +611,7 @@ function hurt(){
 function hpup(type){
     if (hp != 10){
         hp += 1;
-        let lives = document.getElementById("lifecontainer");
-        if (hp <= 5){
-            const img = document.createElement('img');
-            img.src = "./assets/life.png";
-            img.alt = 'life';
-            lives.appendChild(img);
-        }
-        else{
-            const target = lives.children[hp - 6]
-            target.style.filter = 'hue-rotate(250deg)';
-        }
+        CreateHeart();
     }
 }
 
@@ -673,15 +656,7 @@ function rippunish(){
     punishpaus();
 }
 
-function switchto(tab){
-    var selectedtab = document.getElementById(tab);
-    if (currenttab != "none"){
-        var tabrn = document.getElementById(currenttab)
-    }
-     if (currenttab != "none"){tabrn.style.display = "none"};
-    selectedtab.style.display = "block";
-    currenttab = tab;
-}
+
 
 let mixer = new Mixer();
 let audiohandler = new AudioHandler();
