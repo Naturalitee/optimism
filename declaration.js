@@ -1,5 +1,5 @@
 //FOR TESTING 
-const TESTINGMODE = false;
+const TESTINGMODE = true;
 //FOR TESTING 
 
 //GAMEPLAY VARIABLES//
@@ -28,7 +28,7 @@ var timelooking = 0;
 //MENU & BUTTONS//
 var globalvol = 1;
 var screenstate = TESTINGMODE ? "game" : "loading";
-BGMCOUNT = 6;
+BGMCOUNT = 10;
 SFXCOUNT = 11;
 SOUNDCOUNT = BGMCOUNT + SFXCOUNT + 3; //3 denotes special bgm
 var loadedsounds = 0;
@@ -44,9 +44,6 @@ var currenttab = "none";
 
 
 //ATTACKS//
-let attacker = new AttackLoader();
-const ATTACK_PATTERN_LENGTH = 33;
-const INTERLUDE_LENGTH = 17;
 var tickfrequency = 1;
 var silence = 1;
 

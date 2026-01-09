@@ -7,7 +7,7 @@ function increasetempo(){
     bpm += 5;
     clearInterval(Interval);
     Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
-    if (attacknum != 1){var bgm = `main${Randint(6)+1}`}
+    if (attacknum != 1){var bgm = `main${Randint(BGMCOUNT)+1}`}
     else {bgm = `main1`}
     soundspeed = bpm/BASEBPM;
     audiohandler.volumecontrol();
@@ -580,6 +580,7 @@ function checkcollect(item){
 }
 function death(){
     clearInterval(Interval);
+    UpNextHandler();
     audiohandler.stopBGM();
     hurtcd = 0;
     ishurt = false;
@@ -658,5 +659,6 @@ function rippunish(){
 
 
 
-let mixer = new Mixer();
-let audiohandler = new AudioHandler();
+const mixer = new Mixer();
+const audiohandler = new AudioHandler();
+const attacker = new AttackLoader();

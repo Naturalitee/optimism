@@ -32,3 +32,17 @@ function switchto(tab){
     selectedtab.style.display = "block";
     currenttab = tab;
 }
+
+function UpNextHandler(list){
+    let ImageContainer = document.querySelector("#up-next-icons");
+    if (ImageContainer.childElementCount != 0) {
+        ImageContainer.replaceChildren();
+    }
+    if (list){
+        list.forEach(item => {
+            let icon = document.createElement("img");
+            icon.src = `./assets/icons/icon-${item}.png`
+            ImageContainer.append(icon);
+        })
+    }
+}

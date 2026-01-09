@@ -59,6 +59,7 @@ class Artful {
         this.ctx.textAlign = "center";
         this.ctx.fillText(text, x - locationx + offsetx, y - locationy + offsety);
         this.ctx.fillText(text, x + locationx + offsetx, y - locationy + offsety);
+        this.ctx.textAlign = "start";
     }
 
     DrawMyMouth(x,y,text,size,font,color,locationx,locationy,rot,weight){
@@ -66,9 +67,11 @@ class Artful {
         this.ctx.fillStyle = color;
         this.ctx.translate(x, y);
         if (rot){this.ctx.rotate(rot * Math.PI / 180)}
+        this.ctx.textAlign = "center";
         this.ctx.font = `${fweight} ${size}px ${font}`;
         this.ctx.fillText(text,locationx, locationy);
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+        this.ctx.textAlign = "start";
     }
 
     BorderColor(){

@@ -250,7 +250,7 @@ class DCollect { //If you dont collect it before timer runs out you die
 
     lifespan(){
         this.duration -= 1;
-        if (this.duration == 0){
+        if (this.duration <= 0){
             hurt()
             killme(this);
         }
