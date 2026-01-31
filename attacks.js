@@ -3,7 +3,7 @@ var attacks = ""
 const INTERLUDE_LENGTH = 17;
 const ATTACK_PATTERN_LENGTH = 33;
 var ATTACK_COUNT = 0;
-const WARP_COORDS = {14: [5,5], 17: [5,5], 23: [5,5], 36: [1,9], 38:[5,8], 39:[5,5], 40:[2,2], 44: [5,5], 49: [5,5]}
+const WARP_COORDS = {14: [5,5], 17: [5,5], 23: [5,5], 36: [1,9], 38:[5,8], 39:[5,5], 40:[2,2], 44: [5,5], 49: [5,5], 60: [2,5], 61: [5,5], 66: [5,5], 68: [5,5]}
 
 function loadattacks(){
         fetch(
@@ -33,6 +33,7 @@ class AttackLoader {
     this.randmax = 9;
     this.randplus = 0; 
     this.s44cycle = 2;
+    this.savedcoords = [1,1];
     document.addEventListener('tick', this.interpret);
   }
     clearboard(){
@@ -43,14 +44,15 @@ class AttackLoader {
 
     DeclareUpNext(){
       let inputlist = [];
+      console.log(attacknum)
       if (this.nextattack in WARP_COORDS) inputlist.push("warp");
-      if ((attacknum + 1) % 10 == 0) inputlist.push("healingheart");
+      if ((attacknum + 2) % 10 == 0) inputlist.push("healingheart");
       UpNextHandler(inputlist)
     }
 
-    load(num){
+    load(num, urgent){
       let input
-      if (this.curattack != 0) {
+      if (this.curattack != 0 && !urgent) {
       input = this.nextattack
       this.nextattack = num;
       this.curattack = input;
@@ -88,10 +90,10 @@ class AttackLoader {
             Dangers.push(new IWarp(WARP_COORDS[this.nextattack][0],WARP_COORDS[this.nextattack][1], 3));
           }
         }
-        if (this.tick == 32 && !TESTINGMODE){
+        if (this.tick == 32 && !TESTINGMODE && attacknum % 4 != 0){
           this.load(Randint(ATTACK_COUNT)+1);
           if ((variant == "shadowme" || variant == "strikes") && [14,15,39].includes(this.curattack)){
-            this.load(38);
+            this.load(38, true);
           }
         }
         if (this.tick >= ATTACK_PATTERN_LENGTH){
@@ -121,6 +123,7 @@ class AttackLoader {
           console.warn("hey so it broke so heres attack 1 kthxbye")
         }
         let stir = this.pattern[this.tick].split("");
+        let isnegative = false;
         stir.forEach((i) => {
           switch (i){
             case "("://start packing
@@ -141,11 +144,44 @@ class AttackLoader {
             case "H":
               dat += (Math.floor(Math.random()*3)+1)*3-2
               break;
-            case "#":
+            case "x":
+              if (isnegative){
+              dat += (10 - PlayerPos[0]).toString();
+              isnegative = false;
+              }
+              else {
               dat += (PlayerPos[0]).toString()
+              }
               break;
-            case "$":
+            case "y":
+              if (isnegative){
+              dat += (10 - PlayerPos[1]).toString();
+              isnegative = false;
+              }
+              else {
               dat += (PlayerPos[1]).toString()
+              }
+              break;
+            case "^":
+              if (isnegative){
+                dat += (10 - this.savedcoords[0]).toString();
+                isnegative = false;
+              }
+              else {
+                dat += (this.savedcoords[0]).toString()
+              }
+              break;
+            case "&":
+              if (isnegative){
+                dat += (10 - this.savedcoords[1]).toString();
+                isnegative = false;
+              }
+              else {
+                dat += (this.savedcoords[1]).toString()
+              }
+              break;
+            case "-":
+              isnegative = true;
               break;
             default:
               dat += i;
@@ -162,6 +198,9 @@ class AttackLoader {
           break;
         case "M": //Mover (M,x,y,direction)
           Dangers.push(new DMover(Number(box[1]), Number(box[2]), box[3]))
+          break;
+        case "FM": //Firework Mover (FM,x,y,direction,duration)
+          Dangers.push(new DFirework(Number(box[1]), Number(box[2]), box[3], Number(box[4])));
           break;
         case "WM": //Wall of Movers (WM,x,y,wallsize,direction,v/h)
           for(let i = 0; i < Number(box[3]); i++){
@@ -182,12 +221,18 @@ class AttackLoader {
         case "E": //Stalker / Enemy (E,x,y,duration)
           Dangers.push(new DStalker(Number(box[1]), Number(box[2]), Number(box[3])))
           break;
+        case "EX": //Sploder / EXplosive (EX,x,y,duration)
+          Dangers.push(new DSploder(Number(box[1]), Number(box[2]), Number(box[3])))
+          break;
+        case "ES": //Seeker / Enemy Seeker (ES,x,y,duration)
+          Dangers.push(new DSeeker(Number(box[1]), Number(box[2]), Number(box[3])))
+          break;
         case "T": //Targeted Area (for stickers ig), makes a bunch of stickers in a designated area (T,x,y,amount,size,duration)
           for(let i = 0; i < box[3]; i++){
             Dangers.push(new DSticker(Number(box[1]) + Randint(Number(box[4])), Number(box[2]) + Randint(Number(box[4])), Number(box[5]), 1))
           }
           break;
-        case "R": //Relocate (R,x,y)
+        case "TP": //Telport (TP,x,y)
           PlayerPos = [Number(box[1]),Number(box[2])]
           break;
         case "I": //Indicator (I,type,x,y,duration)
@@ -207,7 +252,10 @@ class AttackLoader {
         case "FQ": //change frequency of ticks (FQ,value)
           tickfrequency = box[1];
           break;
-        case "WE": //wall mover exception (makes holes) (WE,holesize,v/h,direction,coord)
+        case "SV":
+          this.savedcoords = [Number(box[1]), Number(box[2])];
+          break;
+        case "WME": //wall mover exception (makes holes) (WME,holesize,v/h,direction,coord)
           let hole = Randint((this.randmax)-(Number(box[1])-1))+1+this.randplus;
           let holes = [];
           for (let i = 0; i < Number(box[1]); i++){holes.push(hole+i)}

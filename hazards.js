@@ -95,7 +95,7 @@ class DMover { //Starts on one of the edges and moves until it reaches the other
                     killme(this);}
             break;
             default:
-                console.log("something broke lil bro")
+                console.log("something broke lil bro", Dangers.indexOf(this), this.direction)
                 break;
         }
     }
@@ -290,6 +290,7 @@ class DStalker{ //Follows the Player.
   nextframe(){
     this.animf += 1;
   }
+
   behavior(){
     let movehow = Randint(2)+1;
     if (this.grace == 0){
@@ -297,8 +298,35 @@ class DStalker{ //Follows the Player.
     }
     if (this.active == true){
         if (this.duration % 2 == 0){
-            if(this.x != PlayerPos[0] || this.y != PlayerPos[1]){
-                if (this.x == PlayerPos[0]){
+            this.movement(movehow)
+        }
+        this.lifespan();    
+    }
+    else{
+            this.grace -= 1;
+    }
+}
+
+    movement(movehow){
+        if(this.x != PlayerPos[0] || this.y != PlayerPos[1]){
+            if (this.x == PlayerPos[0]){
+                if (this.y > PlayerPos[1]){
+                    this.y -= 1;
+                }
+                else{
+                    this.y += 1;
+                }
+            }
+            else if (this.y == PlayerPos[1]){
+                if (this.x > PlayerPos[0]){
+                    this.x -= 1;
+                }
+                else{
+                    this.x += 1;
+                }
+            }
+            else{
+                if (movehow == 1){
                     if (this.y > PlayerPos[1]){
                         this.y -= 1;
                     }
@@ -306,7 +334,7 @@ class DStalker{ //Follows the Player.
                         this.y += 1;
                     }
                 }
-                else if (this.y == PlayerPos[1]){
+                else{
                     if (this.x > PlayerPos[0]){
                         this.x -= 1;
                     }
@@ -314,32 +342,9 @@ class DStalker{ //Follows the Player.
                         this.x += 1;
                     }
                 }
-                else{
-                    if (movehow == 1){
-                        if (this.y > PlayerPos[1]){
-                            this.y -= 1;
-                        }
-                        else{
-                            this.y += 1;
-                        }
-                    }
-                    else{
-                        if (this.x > PlayerPos[0]){
-                            this.x -= 1;
-                        }
-                        else{
-                            this.x += 1;
-                        }
-                    }
-                }
             }
         }
-        this.lifespan();    
     }
-    else{
-        this.grace -= 1;
-    }
-}
 
     lifespan(){
         this.duration -= 1;
@@ -362,7 +367,99 @@ class DStalker{ //Follows the Player.
         let size = inc * scale;
         let offset = (inc - size) / 2;
         artful.DrawHazardBase(posx + offset,posy + offset,size,size,color);
-        artful.DrawStalkerFace(posx,posy,"rgb(0,0,0)");
+        if (this.active) artful.DrawStalkerFace(posx,posy,"rgb(0,0,0)");
+    }
+}
+
+class DSploder extends DStalker{
+    constructor(posx,posy,duration){
+        super(posx,posy,duration);
+    }
+
+    behavior(){ 
+        if (this.duration > 0){
+            super.behavior();
+        }
+        if (this.duration < 1){
+            this.explode();
+        }
+        else if (this.active){
+            this.duration -= 1;
+        }
+    }
+
+    explode(){
+        ["Up","Down","Left","Right"].forEach(dir => {
+            Dangers.push(new DMover(this.x, this.y, dir, true))
+            console.log(`summoned ${dir}`)
+        })
+        killme(this);
+        console.log(Dangers)
+    }
+
+    lifespan(){
+        //wont do anything now to prevent bugs
+    }
+
+    draw(inc){
+        let posx = GLOBAL_OFFSET + (this.x - 1) * inc;
+        let posy = GLOBAL_OFFSET + (this.y - 1) * inc;
+        let activatedcolorset = this.duration >= 2 ? [`rgba(255, 136, 0, 1)`,`rgba(0, 0, 0, 1)`] : [`rgb(255, 0, 0)`,`rgb(255,255,255)`];
+        let color = this.active ? activatedcolorset[0] : `rgba(255, 136, 0, 0.4)`;
+        let scale = 1;
+        if (!this.active) {
+            if (this.animf != 16) {this.nextframe()}
+            let t = (this.animf - 1) / 15;
+            let eased = (Math.cos(Math.PI * t) - 1) / 2;
+            scale = eased;
+        }
+        let size = inc * scale;
+        let offset = (inc - size) / 2;
+        artful.DrawHazardBase(posx + offset,posy + offset,size,size,color);
+        if (this.active) artful.DrawStalkerFace(posx,posy,activatedcolorset[1]);
+    }
+}
+
+class DSeeker extends DStalker{
+    constructor(posx,posy,duration){
+        super(posx,posy,duration);
+        this.seekbehavior = this.seekbehavior.bind(this);
+        document.addEventListener('player-movement', this.seekbehavior);
+    }
+
+    seekbehavior(){
+        if (this.active){
+            let movehow = Randint(3)+1;
+            let willmove = Randint(2)+1;
+            if (willmove == 1) this.movement(movehow);
+        }
+    }
+
+    behavior(){
+        if (this.grace == 0){
+        this.active = true;
+        }
+        else{
+            this.grace -= 1
+        }
+        if (this.active) this.lifespan();
+    }
+
+    draw(inc){
+        let posx = GLOBAL_OFFSET + (this.x - 1) * inc;
+        let posy = GLOBAL_OFFSET + (this.y - 1) * inc;
+        let color = this.active ? `rgb(183, 0, 0)`:`rgba(255, 0, 0, 0.4)`;
+        let scale = 1;
+        if (!this.active) {
+            if (this.animf != 16) {this.nextframe()}
+            let t = (this.animf - 1) / 15;
+            let eased = (Math.cos(Math.PI * t) - 1) / 2;
+            scale = eased;
+        }
+        let size = inc * scale;
+        let offset = (inc - size) / 2;
+        artful.DrawHazardBase(posx + offset,posy + offset,size,size,color);
+        if (this.active) artful.DrawSeekerFace(posx,posy,"rgb(0,0,0)");
     }
 }
 
@@ -468,6 +565,9 @@ class ShadowMe{ //Mix-up. Trails behind the player
         this.y = posy;
         this.active = false;
         this.moves = [];
+        console.log(this.moves)
+        this.behavior = this.behavior.bind(this);
+        document.addEventListener('player-movement', this.behavior);
     }
 
     draw(inc){

@@ -8,6 +8,7 @@
         <script src="./artful.js"></script>
         <script src="./declaration.js"></script>
         <script src="./webpagescripts.js"></script>
+        <script src="./inputs.js"></script>
         <script src="./main.js"></script>
         <link rel="icon" type="image/png" href="./assets/icon.png">
         <title>optimism.</title>
@@ -42,6 +43,7 @@
                     console.log(bpm);
                     clearInterval(Interval);
                     Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
+                    inputhandler.ChangeDelay(bpm);
                 })()">bpm</button>
             </div>
             <p style="margin-bottom: 1px;">Conjure Attack</p>
@@ -50,7 +52,7 @@
                 <button onclick="(() => {
                     const INPUT = document.getElementById('attackinput');
                     attacker.tick = 0;
-                    attacker.load(Number(INPUT.value));
+                    attacker.load(Number(INPUT.value), true);
                 })()">Attack!</button>
             </div>
             <p style="margin-bottom: 1px;">Conjure Mix-Up</p>

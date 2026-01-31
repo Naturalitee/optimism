@@ -1,15 +1,17 @@
 //FOR TESTING 
-const TESTINGMODE = true;
+const TESTINGMODE = false;
 //FOR TESTING 
 
 //GAMEPLAY VARIABLES//
-var fps = setInterval(() => mainloop(), 16.67); //60fps
+const FPS_IN_MS = 16.67;
+var fps = setInterval(() => mainloop(), FPS_IN_MS); //60fps
 var PlayerPos = [5, 5];
 var bpm = 120;
 var starthp = 5;
 var hp = 0;
 var healed = 0
 const tick = new CustomEvent('tick');
+const inputgrace = new CustomEvent('inputgrace');
 const GLOBAL_OFFSET = 25;
 const BASEBPM = 120;
 var Interval = 0;

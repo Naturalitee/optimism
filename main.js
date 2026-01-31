@@ -7,6 +7,7 @@ function increasetempo(){
     bpm += 5;
     clearInterval(Interval);
     Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
+    inputhandler.ChangeDelay(bpm);
     if (attacknum != 1){var bgm = `main${Randint(BGMCOUNT)+1}`}
     else {bgm = `main1`}
     soundspeed = bpm/BASEBPM;
@@ -184,74 +185,8 @@ function mainloop() { //draw everything
         }
         mixer.drawspeedup(CTX, INCREMENT)
         HitReg();
+        document.dispatchEvent(inputgrace);
         artful.PulseEffect();  
-    }
-}
-document.addEventListener("keydown", KeyPress)
-document.addEventListener("mousedown", ClickDetec)
-
-function ClickDetec(e){
-    const canvas = document.getElementById("Canvas");
-    foo = canvas.getBoundingClientRect();
-    if (screenstate == "warning" && (e.clientX >= foo.x && e.clientX <= foo.x + foo.width) && (e.clientY >= foo.y && e.clientY <= foo.y + foo.height)){  
-        audiohandler.audioctx.resume();
-        screenstate = "menu";
-        audiohandler.play("titletheme", "bgm")
-    }
-    let cx = (e.clientX - foo.left) * (canvas.width / foo.width);
-    let cy = (e.clientY - foo.top) * (canvas.height / foo.height);
-    if (clickgrace == 0 && screenstate == "menu" && (cx >= PLAYBOX.x1 && cx <= PLAYBOX.x2) && (cy >= PLAYBOX.y1 && cy <= PLAYBOX.y2)){transitiontime = true}
-    if (startup == 271 && screenstate == "gameover" && (cx >= MENUBOX.x1 && cx <= MENUBOX.x2) && (cy >= MENUBOX.y1 && cy <= MENUBOX.y2)){screenstate = "menu"}
-}
-
-function KeyPress(e){ 
-    if (["a", "s", "w", "d"].includes(e.key.toLowerCase()) && startup == 5){
-        if (!e.repeat){
-            Movement(e.key.toLowerCase());
-        }
-    }
-    if (["-", "=", "_", "+"].includes(e.key)){
-        ((e.key == "-" || e.key == "_") ? audiohandler.volumecontrol("down") : audiohandler.volumecontrol("up"));
-    }
-}
-
-function Movement(key){ 
-    timelooking = 15;
-    mixer.resetdisco();
-    if (variant == "inverted"){
-        var i = -1;
-        var j = 10;
-    }
-    else {
-        var i = 1;
-        var j = 0;
-    }
-    if (variant == "shadowme"){mixer.callshadow()}
-    switch (key){
-        case "a":
-        if (PlayerPos[0] - i != Math.abs(0-j)){
-            PlayerPos[0] -= i;
-            looking = ["x", -3];
-        }
-        break;  
-        case "s":
-        if (PlayerPos[1] + i != Math.abs(10-j)){
-            PlayerPos[1] += i;
-            looking = ["y", 5];
-        }
-        break;
-        case "w":
-        if (PlayerPos[1] - i != Math.abs(0-j)){
-            PlayerPos[1] -= i;
-            looking = ["y", -3];
-        }
-        break;
-        case "d":
-        if (PlayerPos[0] + i != Math.abs(10-j)){
-            PlayerPos[0] += i;
-            looking = ["x", 3];
-        }
-        break;
     }
 }
 
@@ -470,11 +405,11 @@ class AudioHandler{
         if (this.currentbgm && type == "bgm"){this.stopBGM()};
         const sound = this.audioctx.createBufferSource();
         sound.buffer = type == "bgm" ? this.bgms[name] : this.sfxs[name];
-        if (type == "bgm"){
+        if (type == "bgm" ){
             sound.loop = true;
             sound.playbackRate.value = soundspeed;
-            sound.preserve
         };
+        if (name == "warp") sound.playbackRate.value = soundspeed;
         sound.connect(this.volume);
         sound.start();
         if (type == "bgm"){this.currentbgm = sound};
@@ -626,7 +561,7 @@ function start(){
         hpup();
     }
     screenstate = "game";
-    attacker.load(Randint(50)+1);
+    attacker.load(Randint(ATTACK_COUNT)+1);
     artful.PulseActive = true;
 }
 
@@ -650,6 +585,7 @@ function gtransitionstart(){
     audiohandler.volumecontrol();
     audiohandler.play("countin", "bgm");
     Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
+    inputhandler.ChangeDelay(bpm);
 }
 
 function rippunish(){
@@ -662,3 +598,5 @@ function rippunish(){
 const mixer = new Mixer();
 const audiohandler = new AudioHandler();
 const attacker = new AttackLoader();
+const playermove = new Event("player-movement");
+const inputhandler = new InputHandler();

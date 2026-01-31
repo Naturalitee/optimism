@@ -156,6 +156,27 @@ class Artful {
         this.ctx.stroke();
     }
 
+    DrawSeekerFace(posx,posy,color){
+        this.ctx.strokeStyle = color;
+        this.ctx.fillStyle = "rgb(255,255,255)"
+        this.ctx.beginPath();
+        this.ctx.moveTo(posx + this.inc / 2, posy + 15);
+        this.ctx.lineTo(posx + this.inc - 5, posy + this.inc / 2);
+        this.ctx.lineTo(posx + this.inc / 2, posy + this.inc - 15);
+        this.ctx.lineTo(posx + 5, posy + this.inc / 2);
+        this.ctx.closePath();
+        this.ctx.stroke();
+        this.ctx.fill();
+        this.ctx.fillStyle = "rgb(0, 0, 0)"
+        this.ctx.beginPath();
+        this.ctx.moveTo(posx + this.inc / 2, posy + this.inc - 15);
+        this.ctx.lineTo(posx + this.inc - 25, posy + this.inc / 2);
+        this.ctx.lineTo(posx + this.inc / 2, posy + 15);
+        this.ctx.lineTo(posx + 25, posy + this.inc / 2);
+        this.ctx.closePath();
+        this.ctx.fill();
+    }
+
     PulseEffect(){
         if (this.PulseActive) {
             this.PulseFrame += 1;

@@ -1,6 +1,9 @@
 //v1.3//
 > Added 4 new audio tracks!
 > Added an Up Next tab so you can anticipate what comes next!
+> Reworked how some warps behaved.
+> Nerfed Attack 37, it was too hard at faster speeds.
+> Nerfed Attack 24, 43
 
 /v1.2.1/
 > Fixed an element not being centered properly (gross).
