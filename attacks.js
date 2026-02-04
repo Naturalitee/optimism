@@ -44,7 +44,6 @@ class AttackLoader {
 
     DeclareUpNext(){
       let inputlist = [];
-      console.log(attacknum)
       if (this.nextattack in WARP_COORDS) inputlist.push("warp");
       if ((attacknum + 2) % 10 == 0) inputlist.push("healingheart");
       UpNextHandler(inputlist)
@@ -85,7 +84,6 @@ class AttackLoader {
         }
         if ((this.tick == 30 && attacknum % 4 != 0) || (this.tick == 14 && isinterlude)){ //for warp indicators!
           if (this.nextattack in WARP_COORDS){
-            console.log("yah!");
             console.log(WARP_COORDS.toString(this.nextattack)[0])
             Dangers.push(new IWarp(WARP_COORDS[this.nextattack][0],WARP_COORDS[this.nextattack][1], 3));
           }
@@ -372,6 +370,7 @@ class AttackLoader {
               case "B":
                 mixer.variantpicker();
                 mixer.mixuptext = (mixer.pickedvariant != "none")
+                if (variant == "glassbones") this.confettiexplosion();
                 break;
               case "C":
                 mixer.mixuptime = mixer.pickedvariant != "none";
@@ -382,6 +381,12 @@ class AttackLoader {
         default:
           break;
       }
+    }
+
+    confettiexplosion(){
+      audiohandler.play("oneshotsuccess", "sfx");
+      Dangers.push(new IHeal(5,9,16,{unmoving: true}));
+      for (let i = 0; i <= 100; i++) Dangers.push(new IConfetti());
     }
 
     newchoice(){

@@ -4,7 +4,7 @@ if (TESTINGMODE){
 
 function increasetempo(){
     artful.PulseActive = true;
-    bpm += 5;
+    bpm += BPMchange();
     clearInterval(Interval);
     Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
     inputhandler.ChangeDelay(bpm);
@@ -25,6 +25,11 @@ function Randint(max) {
   }
 }
 
+function BPMchange(){
+    if (variant == "doubletime") return modifierhandler.bpmchange * 2;
+    else if (variant == "replay") return 0;
+    else return modifierhandler.bpmchange;
+}
 
 function bpmtick() {
     document.dispatchEvent(tick);
@@ -62,6 +67,14 @@ function DrawMeFace(posx, posy){
         ox = (2 - Math.random() * 4)*mixer.scale;
         oy = (2 - Math.random() * 4)*mixer.scale;
     }
+    else if (variant == "doubledamage"){
+        color = `rgba(0, 0, 0, ${playeropac})`;
+        ox = mixer.eyemovement;
+    }
+    else if (variant == "glassbones"){
+        color = `rgba(0, 0, 0, ${playeropac})`;
+        ox = (2 - Math.random() * 4)*mixer.scale;
+    }
     else{
         if (looking[0] == "x"){ox = looking[1]*mixer.scale}
         else{oy = looking[1]*mixer.scale}
@@ -76,13 +89,20 @@ function DrawMeFace(posx, posy){
             artful.DrawMyEyes(posx,posy,"o",16*mixer.scale,"Fira Sans",color,(7.5*mixer.scale),ox,(5*mixer.scale),oy);
             artful.DrawMyMouth(posx,posy,"<",20,"Verdana",color,-5,6.5,270);
             break;
+        case (variant == "doubledamage"):
+            artful.DrawMyEyes(posx,posy,".",56*mixer.scale,"Fira Sans",color,(7.5*mixer.scale),ox,(5*mixer.scale),oy);
+            artful.DrawMyMouth(posx,posy,"-",20,"Arial",color,0,6,180);
+            break;
+        case (variant == "glassbones"):
+            artful.DrawMyEyes(posx,posy,"o",20*mixer.scale,"Fira Sans",color,(7.5*mixer.scale),ox,(5*mixer.scale),oy);
+            artful.DrawMyMouth(posx + ox,posy,"~",44,"Courier",color,0,20,0);
+            break;
         case (attacker.pattern.length == 17):
+            artful.DrawMyEyes(posx,posy,"^",16*mixer.scale,"Verdana",color,(7.5*mixer.scale),ox,(1*mixer.scale),oy,"bold");
             if (attacker.clbrt == 1){
-                artful.DrawMyEyes(posx,posy,"^",16*mixer.scale,"Verdana",color,(7.5*mixer.scale),ox,(1*mixer.scale),oy,"bold");
                 artful.DrawMyMouth(posx,posy,"o",20,"Verdana",color,0,6.5,0);
             }
             else {
-                artful.DrawMyEyes(posx,posy,"^",16*mixer.scale,"Verdana",color,(7.5*mixer.scale),ox,(1*mixer.scale),oy,"bold");
                 artful.DrawMyMouth(posx,posy,"-",20,"Verdana",color,0,6.5,0);
             }
             break;
@@ -113,15 +133,15 @@ function mainloop() { //draw everything
     let x = 0;
     artful.DrawFrame();
     if (screenstate == "warning"){
-        artful.DrawText("WARNING",64,"Arial","rgba(255, 0, 0, 1)",GLOBAL_OFFSET,100,true);
-        artful.DrawText('This "game" contains flashing lights. Do not proceed if',24,"Arial","rgba(255, 255, 255, 1)",GLOBAL_OFFSET,200,true);
-        artful.DrawText('you are sensitive to flashing lights or suffer from',24,"Arial","rgba(255, 255, 255, 1)",GLOBAL_OFFSET,230,true);
-        artful.DrawText('photosensitive epilepsy.',24,"Arial","rgba(255, 255, 255, 1)",GLOBAL_OFFSET,260,true);
-        artful.DrawText('click anywhere to continue.',24,"Arial","rgba(255, 255, 255, 1)",GLOBAL_OFFSET,600,true);
+        artful.DrawText("WARNING",{size:64, font:"Arial"},"rgba(255, 0, 0, 1)",GLOBAL_OFFSET,100,true);
+        artful.DrawText('This "game" contains flashing lights. Do not proceed if',{size:24, font:"Arial"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,200,true);
+        artful.DrawText('you are sensitive to flashing lights or suffer from',{size:24, font:"Arial"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,230,true);
+        artful.DrawText('photosensitive epilepsy.',{size:24, font:"Arial"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,260,true);
+        artful.DrawText('click anywhere to continue.',{size:24, font:"Arial"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,600,true);
     }
     if (screenstate == "loading"){
-        artful.DrawText("Loading...",64,"Comic Sans MS","rgba(255, 255, 255, 1)",GLOBAL_OFFSET,350,true);
-        artful.DrawText(`${loadedsounds}/${SOUNDCOUNT}`,36,"Comic Sans MS","rgba(255, 255, 255, 1)",GLOBAL_OFFSET,500,true);
+        artful.DrawText("Loading...",{size:64, font:"Comic Sans MS"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,350,true);
+        artful.DrawText(`${loadedsounds}/${SOUNDCOUNT}`,{size:36, font:"Comic Sans MS"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,500,true);
         if (loadedsounds/SOUNDCOUNT == 1){
             screenstate = "warning";
         }
@@ -138,8 +158,8 @@ function mainloop() { //draw everything
         }
         artful.DrawImage(textanim == 1 ? TITLE1 : TITLE2, 40, -230);
         artful.DrawImage(textanim == 1 ? PLAY1 : PLAY2, 40, 0);
-        artful.DrawText("volume (use +/- keys to control)",24,"Comic Sans MS","rgb(255,255,255)",GLOBAL_OFFSET,550,true);
-        artful.DrawText(globalvol*10,36,"Comic Sans MS","rgb(255,255,255)",GLOBAL_OFFSET,600,true)
+        artful.DrawText("volume (use +/- keys to control)",{size:24, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,550,true);
+        artful.DrawText(globalvol*10,{size:36, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,600,true)
         CTX.fillStyle = `rgba(0, 0, 0, ${transition/100})`;
         CTX.fillRect(GLOBAL_OFFSET,GLOBAL_OFFSET,INCREMENT*9,INCREMENT*9);
         textanimtick += 1;
@@ -150,10 +170,10 @@ function mainloop() { //draw everything
     }
     if (screenstate == "gameover"){
         artful.DrawImage(textanim == 1 ? GAMEOVER1 : GAMEOVER2, 20, -230);
-        if (startup >= 90){artful.DrawText("Score:",48,"Comic Sans MS","rgb(255,255,255)",GLOBAL_OFFSET,300,true)}
-        if (startup >= 180){artful.DrawText(attacknum-1,72,"Comic Sans MS","rgb(255,255,255)",GLOBAL_OFFSET,400,true)}
+        if (startup >= 90){artful.DrawText("Score:",{size:48, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,300,true)}
+        if (startup >= 180){artful.DrawText(attacknum-1,{size:72, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,400,true)}
         if (startup >= 270){
-            artful.DrawText("back to menu",36,"Comic Sans MS","rgb(255,255,255)",GLOBAL_OFFSET,550,true);
+            artful.DrawText("back to menu",{size:36, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,550,true);
         }
         if (startup == 270){audiohandler.play("titletheme", "bgm")}
         if (startup % 90 == 0){audiohandler.play("reveal", "sfx")}
@@ -183,9 +203,9 @@ function mainloop() { //draw everything
             timelooking -= 1;
             if (timelooking == 0){looking = [0,0]}
         }
-        mixer.drawspeedup(CTX, INCREMENT)
+        mixer.drawspeedup();
         HitReg();
-        document.dispatchEvent(inputgrace);
+        document.dispatchEvent(RefreshOnFrame);
         artful.PulseEffect();  
     }
 }
@@ -201,8 +221,61 @@ class Mixer{ //its for the mixups
         this.scale = 1;
         this.behavior = this.behavior.bind(this);
         this.swoop = 0;
+        this.variantchance = 6; //one in X
+        this.eyemovement = 0;
         this.pickedvariant = "none";
-        this.variants = ["shadowme", "big", "inverted", "disco", "pulse", "silent", "healthup", "strikes"]
+        this.variants = {
+            shadowme: {
+                name: "Shadow Clone",
+                description: "it trails behind you!"
+            },
+            big: {
+                name: "BIG",
+                description: "same hitbox tho!"
+            },
+            inverted: {
+                name: "Inverted",
+                description: "its SDWA now!"
+            },
+            disco: {
+                name: "Sugar Rush",
+                description: "dont stop moving!"
+            },
+            pulse: {
+                name: "Phantom",
+                description: "blink and you'll miss it!"
+            },
+            silent: {
+                name: "Silent",
+                description: "shhhhh!"
+            },
+            healthup: {
+                name: "Health Up",
+                description: "well aren't you a lucky one!"
+            },
+            strikes: {
+                name: "Side Strikes",
+                description: "more stuff to dodge!"
+            },
+            glassbones: {
+                name: "Glass Bones",
+                description: "Good Luck..."
+            },
+            doubledamage: {
+                name: "Double Damage",
+                description: "double the owie!",
+                fontsize: 44
+            },
+            doubletime: {
+                name: "Double Time",
+                description: "lets go a bit faster!"
+            },
+            replay: {
+                name: "Replay",
+                description: "i liked that lets do it again"
+            }
+            };
+        this.varkeys = Object.keys(this.variants)
         document.addEventListener('tick', this.behavior);
     }
 
@@ -226,6 +299,21 @@ class Mixer{ //its for the mixups
             if (this.tick >= 4){
                 this.visible = true;
                 this.tick = 0;
+            }
+        }
+        if (variant == "doubledamage"){
+            if (this.eyemovement == 0){
+                const eyemovementchance = Randint(15)
+                if (eyemovementchance == 14) this.eyemovement = 4;
+            }
+            else {
+                this.tick += 1;
+                if (this.tick > 4) {
+                    this.eyemovement = 0;
+                    this.tick = 0;
+                }
+                else if (this.tick < 2) this.eyemovement = 4;
+                else this.eyemovement = -4;
             }
         }
         if (variant == "big"){
@@ -255,9 +343,9 @@ class Mixer{ //its for the mixups
 
 
     variantpicker(){  
-        let variantnow = (Randint(6)+1 == 6);
-        if (variantnow){
-            this.pickedvariant = this.variants[Randint(this.variants.length)]
+        let IsVariantNow = (Randint(this.variantchance)+1 == this.variantchance);
+        if (IsVariantNow){
+            this.pickedvariant = this.varkeys[Randint(this.varkeys.length)]
         }
         else{this.pickedvariant = "none"}
     }
@@ -274,53 +362,34 @@ class Mixer{ //its for the mixups
         }
     }
 
-    drawspeedup(ctx,inc){
+    drawspeedup(){
         if (isinterlude){
             if (this.swoop != 30){this.swoop += 1}
         }
         else{
             if (this.swoop != 0){this.swoop -= 1}
         }
+        if (this.swoop != 0 || isinterlude){
         let x = -1000 + (Math.floor(38.33 * this.swoop+0.15));
-        ctx.fillStyle = `rgb(0,0,0)`;
-        ctx.strokeStyle = `rgb(255,255,255)`;
-        ctx.fillRect(x+8,90,inc*5,200);
-        ctx.strokeRect(x+8,90,inc*5,200);
-        ctx.fillStyle = `rgb(255,255,255)`;
-        ctx.font = `bold 66px Comic Sans MS`;
-        ctx.textAlign = "left";
-        let text = this.mixuptext ? "Mix Up!" : "Speed Up!";
-        ctx.fillText(text, 5+x+(inc*5 - ctx.measureText(text).width)/ 2, 200);
-        if (this.mixuptime){this.drawmixup(ctx, inc)}
+        artful.DrawInterlude((this.mixuptext ? "Mix Up!" : "Speed Up!"),x);
+        if (this.mixuptime){this.drawmixup()}
+        }
     }
 
-    drawmixup(ctx,inc){
-        let mixupnames = ["Shadow Clone", "BIG", "Inverted", "Sugar Rush", "Phantom", "Silent", "Health Up", "Side Strikes"]
-        let mixupdesc = ["It trails behind you!", "Same hitbox tho!", "its SDWA now!", "Dont stop moving!", "Blink and you'll miss it!", "shhhhh!", "well aren't you a lucky one!", "More stuff to dodge!"]
+    drawmixup(){
         let x = -1000 + (Math.floor(38.33 * this.swoop+0.15));
-        ctx.fillStyle = `rgb(0,0,0)`;
-        ctx.strokeStyle = `rgb(255,255,255)`;
-        ctx.fillRect(x+8,340,inc*5,200);
-        ctx.strokeRect(x+8,340,inc*5,200);
-        ctx.fillStyle = `rgb(255,255,255)`;
-        ctx.font = `bold 48px Comic Sans MS`;
-        ctx.textAlign = "left";
-        let text = mixupnames[this.variants.indexOf(this.pickedvariant)];
-        ctx.fillText(text, 5+x+(inc*5 - ctx.measureText(text).width)/ 2, 340+75);
-        text = mixupdesc[this.variants.indexOf(this.pickedvariant)];
-        ctx.font = `bold 24px Comic Sans MS`;
-        ctx.fillText(text, 5+x+(inc*5 - ctx.measureText(text).width)/ 2, 340+150);
+        artful.DrawMixedUp(this.variants[this.pickedvariant], x)
     }
 
     playmixupaudio(){
         let input = "";
         let startpos = 0;
-        let pbr = 1;
+        let PlaybackRate = 1;
         let vol = 1;
         switch (this.pickedvariant){
             case "shadowme":
                 input = "shadow";
-                pbr = 2;
+                PlaybackRate = 2;
                 break;
             case "big":
                 input = "big";
@@ -335,11 +404,11 @@ class Mixer{ //its for the mixups
             case "pulse":
                 input = "ghost";
                 startpos = 1;
-                pbr = 2;
+                PlaybackRate = 2;
                 break;
             case "silent":
                 input = "ghost";
-                pbr = 2;
+                PlaybackRate = 2;
                 vol = 0;
                 break;
             case "healthup":
@@ -347,108 +416,69 @@ class Mixer{ //its for the mixups
                 break;
             case "strikes":
                 input = "shadow";
-                pbr = 2;
+                PlaybackRate = 2;
+                break;
+            case "doubletime":
+                input = "speedier";
+                PlaybackRate = 2;
+                break;
+            case "doubledamage":
+                input = "bruh";
+                break;
+            case "glassbones":
+                input = "oneshot";
+                break;
+            case "replay":
+                input = "replay";
+                startpos = 2;
+                PlaybackRate = 2;
                 break;
         }
         let sound = new Audio(`./sound/sfx/${input}.mp3`);
         sound.currentTime = startpos;
-        sound.playbackRate = pbr * soundspeed;
+        sound.playbackRate = PlaybackRate * soundspeed;
         sound.volume = vol;
         sound.play();
     }
 }
 
-class AudioHandler{
+class ModifierHandler{
     constructor(){
-        this.audioctx = new AudioContext()
-        this.bgms = {};
-        this.sfxs = {};
-        this.sfxlist = ["yummy", "invert", "shadow", "big", "ghost", "reveal", "collect", "hurt", "warp", "heartstart", "heartget"];
-        this.currentbgm = null;
-        this.index = -1;
-        this.volume = this.audioctx.createGain();
-        this.volume.gain.value = globalvol * silence;
-        this.volume.connect(this.audioctx.destination);
-        this.makesounds();
-    }
-
-    async makesounds(){
-        await Promise.all([
-            this.instbgm(),
-            this.instsfx()
-        ]);
-    }
-
-    async instbgm(){
-        for (let i = 1; i <= BGMCOUNT; i++){ //for the game bgm
-            await this.createsound(`main${i}`, `./sound/bgm/main${i}.mp3`, this.bgms);
+        this.bpmchange = 5;
+        this.modifiers = {
+            difficulty: "Normal"
         }
-        await this.createsound("titletheme", `./sound/bgm/title_theme.mp3`, this.bgms); 
-        await this.createsound("countin", `./sound/bgm/countin.mp3`, this.bgms); 
-        await this.createsound("tsktsktsk", `./sound/bgm/tsktsktsk.mp3`, this.bgms);
+        this.SetUpModifiers();
     }
 
-    async createsound(name, url, destination){
-            let audiofile = await fetch(url);
-            let arrayBuffer = await audiofile.arrayBuffer();
-            let audioBuffer = await this.audioctx.decodeAudioData(arrayBuffer);
-            destination[name] = audioBuffer;
-            loadedsounds += 1;
+    SetUpModifiers(){
+        this.DifficultyBPM();
     }
 
-    async instsfx(){ 
-        this.sfxlist.forEach(async (item) => await this.createsound(`${item}`, `./sound/sfx/${item}.mp3`, this.sfxs))
-    }
-
-
-    play(name, type){
-        if (this.currentbgm && type == "bgm"){this.stopBGM()};
-        const sound = this.audioctx.createBufferSource();
-        sound.buffer = type == "bgm" ? this.bgms[name] : this.sfxs[name];
-        if (type == "bgm" ){
-            sound.loop = true;
-            sound.playbackRate.value = soundspeed;
-        };
-        if (name == "warp") sound.playbackRate.value = soundspeed;
-        sound.connect(this.volume);
-        sound.start();
-        if (type == "bgm"){this.currentbgm = sound};
-        if (type !== "bgm") {
-            sound.addEventListener("ended", () => sound.disconnect());
+    DifficultyBPM(){
+        switch(this.modifiers.difficulty){
+            case "Normal":
+                this.bpmchange = 5;
+                break;
+            case "Easy":
+                this.bpmchange = 2;
+                break;
+            case "Hard":
+                this.bpmchange = 10;
+                break;
+            default:
+                console.log("something broke lil bro");
+                break;
         }
     }
-
-    stopBGM(){
-        this.currentbgm.stop();
-        this.currentbgm.disconnect();
-        this.currentbgm = null;
-    }
-
-    createsfxobject(iname){
-        return {
-            name: iname,
-            src: new Audio(`./sound/sfx/${iname}.mp3`)
-        }
-    }
-
-    volumecontrol(direction){
-    if (direction == "up" && globalvol != 1){
-        globalvol += 0.1;
-    }
-    else if (direction == "down" && globalvol != 0){
-        globalvol -= 0.1;
-    }
-    globalvol = Number(globalvol.toFixed(1));
-    this.volume.gain.value = globalvol * silence * (1 - musicfade/100);
-}
-
 }
 
 Dangers = []; //array containing all active hazards
 function killme(object){
-    document.removeEventListener('tick', object.behavior)
-    victim = Dangers.indexOf(object)
-    Dangers.splice(victim, 1)
+    document.removeEventListener('tick', object.behavior);
+    if (object instanceof IConfetti) document.removeEventListener('refreshframe', object.behavior);
+    victim = Dangers.indexOf(object);
+    Dangers.splice(victim, 1);
 }
 
 
@@ -459,45 +489,45 @@ function EqCheck(a, b) {
 function HitReg(){
     checkhere = [];
     collecthere = [];
+    Dangers.sort((a, b) => a.z - b.z);
     Dangers.forEach(function(item){ //put everyones coords inside
         let widthfactor = item.size;
-        if (item.active == true){
-            switch (true){
-                case item instanceof DSweeper:
-                    if (item.direction == "vertical"){
+        if (!item.active) return;
+        switch (true){
+            case item instanceof DSweeper:
+                if (item.direction == "vertical"){
+                for (let w = 0; w < widthfactor; w++){
+                    for (let i = 1; i < 10; i++){
+                        checkhere.push([item.pos + w, i])
+                        }
+                    }
+                }
+                else{
                     for (let w = 0; w < widthfactor; w++){
                         for (let i = 1; i < 10; i++){
-                            checkhere.push([item.pos + w, i])
-                            }
+                            checkhere.push([i, item.pos + w])
+                        }
+                    }   
+                }
+                break;
+            case checkcollect(item):
+                collecthere.push([item.x, item.y])
+                break;
+            case item instanceof DSticker:
+                if (item.size != 1){
+                    for (let x = 0; x < item.size; x++){
+                        for (let y = 0; y < item.size; y++){
+                            checkhere.push([item.x + x, item.y + y]);
                         }
                     }
-                    else{
-                        for (let w = 0; w < widthfactor; w++){
-                            for (let i = 1; i < 10; i++){
-                                checkhere.push([i, item.pos + w])
-                            }
-                        }   
-                    }
-                    break;
-                case checkcollect(item):
-                    collecthere.push([item.x, item.y])
-                    break;
-                case item instanceof DSticker:
-                    if (item.size != 1){
-                        for (let x = 0; x < item.size; x++){
-                            for (let y = 0; y < item.size; y++){
-                                checkhere.push([item.x + x, item.y + y]);
-                            }
-                        }
-                    }
-                    else{checkhere.push([item.x, item.y])}
-                    break;
-                default:
-                    checkhere.push([item.x, item.y])
-                    break;
-            }
+                }
+                else{checkhere.push([item.x, item.y])}
+                break;
+            default:
+                checkhere.push([item.x, item.y])
+                break;
         }
-    })
+    });
     if (checkhere.some(itm => EqCheck(itm, PlayerPos))){
         hurt();
     }
@@ -534,17 +564,30 @@ function punishpaus(){
 
 function hurt(){
     if (!ishurt){
-    audiohandler.play("hurt", "sfx")
+    audiohandler.play("hurt", "sfx");
     ishurt = true;
     hurtcd = 180;
     playeropac = 0.6;
-    RemoveHeart();
-    hp -= 1;
-    if (hp == 0){death()}
+    if (variant == "doubledamage"){
+        RemoveHeart();
+        RemoveHeart();
+        hp -= 2;
+    }
+    else if (variant == "glassbones"){
+        for (let i = hp; i > 0; i--) {
+            RemoveHeart();
+        }
+        hp = 0;
+    }
+    else {
+        RemoveHeart();
+        hp -= 1;
+    }
+    if (hp <= 0) death()
     }
 }
 
-function hpup(type){
+function hpup(){
     if (hp != 10){
         hp += 1;
         CreateHeart();
@@ -555,7 +598,7 @@ function start(){
     hp = 0;
     transitiontime = false;
     transition = 0;
-    bpm -= 5;
+    bpm -= modifierhandler.bpmchange;
     increasetempo();
     for (i = 1; i <= starthp; i++){
         hpup();
@@ -594,9 +637,11 @@ function rippunish(){
 }
 
 
-
 const mixer = new Mixer();
 const audiohandler = new AudioHandler();
 const attacker = new AttackLoader();
 const playermove = new Event("player-movement");
 const inputhandler = new InputHandler();
+const modifierhandler = new ModifierHandler();
+
+document.addEventListener("fps", mainloop());

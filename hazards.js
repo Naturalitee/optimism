@@ -2,6 +2,7 @@ class DSticker { //Persists in a position before leaving.
   constructor(posx, posy, duration, size) {
     this.x = posx;
     this.y = posy;
+    this.z = 1;
     this.duration = duration;
     this.size = size;
     this.grace = 2;
@@ -54,6 +55,7 @@ class DMover { //Starts on one of the edges and moves until it reaches the other
   constructor(posx, posy, direction, active) {
     this.x = posx;
     this.y = posy;
+    this.z = 2;
     this.direction = direction;
     this.grace = (active == null) ? 2 : 0;
     this.active = active ?? false;
@@ -156,6 +158,7 @@ class DFirework extends DMover { //A Mover that explodes into four after a short
 class DSweeper { //Encompasses a whole column or row.
     constructor(pos, direction, duration, size) {
         this.pos = pos;
+        this.z = 1;
         this.direction = direction;
         this.duration = duration;
         this.size = size;
@@ -227,6 +230,7 @@ class DCollect { //If you dont collect it before timer runs out you die
     constructor(posx, posy, duration) {
         this.x = posx;
         this.y = posy;
+        this.z = 4;
         this.duration = duration;
         this.active = true;
         this.behavior = this.behavior.bind(this);
@@ -270,7 +274,9 @@ class DCollect { //If you dont collect it before timer runs out you die
             let textcolor = "rgb(0,0,0)";
             artful.DrawHazardBase(posx,posy,inc,inc,color);
             CTX.font = "55px serif"; //just so it can measure it properly
-            artful.DrawText(counter,55,"serif",textcolor,posx+(inc - CTX.measureText(counter.toString()).width) / 2 ,posy+inc/1.25);
+            const CounterFontSize = 55;
+            const CounterFont = "serif";
+            artful.DrawText(counter,{size:CounterFontSize, font:CounterFont},textcolor,posx+(inc - CTX.measureText(counter.toString()).width) / 2 ,posy+inc/1.25);
         } 
     }
 }
@@ -279,6 +285,7 @@ class DStalker{ //Follows the Player.
   constructor(posx, posy, duration) {
     this.x = posx;
     this.y = posy;
+    this.z = 3;
     this.duration = duration;
     this.active = false;
     this.animf = 0;
@@ -391,10 +398,8 @@ class DSploder extends DStalker{
     explode(){
         ["Up","Down","Left","Right"].forEach(dir => {
             Dangers.push(new DMover(this.x, this.y, dir, true))
-            console.log(`summoned ${dir}`)
         })
         killme(this);
-        console.log(Dangers)
     }
 
     lifespan(){
@@ -464,13 +469,15 @@ class DSeeker extends DStalker{
 }
 
 class Indicator{ //Non-collide indicators (also literally anything that should exist but not damage the playerig)
-    constructor(posx, posy, duration) {
+    constructor(posx, posy, duration, props) {
         this.x = posx;
         this.y = posy;
-        this.duration = duration;
+        this.props = props ?? false;
+        this.z = this.props.zorder ?? 5;
+        this.duration = duration ?? 0;
         this.active = false;
         this.behavior = this.behavior.bind(this);
-        document.addEventListener('tick', this.behavior);
+        if (!this.props.RefreshOnFrame) document.addEventListener('tick', this.behavior);
     }
 
     behavior(){
@@ -483,8 +490,8 @@ class Indicator{ //Non-collide indicators (also literally anything that should e
 }
 
 class IHeal extends Indicator{ //Heals the player upon contact
-    constructor(posx,posy,duration){
-        super(posx, posy, duration);
+    constructor(posx,posy,duration, props){
+        super(posx, posy, duration, props);
         this.active = true;
         audiohandler.play("heartstart", "sfx");
     }
@@ -512,7 +519,7 @@ class IHeal extends Indicator{ //Heals the player upon contact
             Dangers[Dangers.length - 1] = temp;
             }
         }
-        this.heartmovement(["left","up","down","right"][Randint(4)]);
+        if (!this.props.unmoving) this.heartmovement(["left","up","down","right"][Randint(4)]);
     }
 
     heartmovement(direction){
@@ -559,13 +566,41 @@ class IWarp extends Indicator{ //Teleports Plyaer.
     }
 }
 
+class IConfetti extends Indicator{ //Is specifically for when the player successfully completes a round with glass bones. also techinically an indicator.
+    constructor(){
+        const desx = Randint(SCREEN.width - GLOBAL_OFFSET) + GLOBAL_OFFSET;
+        super(desx,-50,40,{RefreshOnFrame: true});
+        this.rotation = 0;
+        this.rotationspeed = Math.random() * 5 * ((Randint(2) == 0) ? -1 : 1); //choose clockwise or counterclockwise;
+        this.forceY =  Math.random() * 10; //gravity. also make it random so theres kinda a delay?
+        this.gravity = -0.16; //how much faster it gets every frame.
+        this.color = `rgb(${Randint(256)},${Randint(256)},${Randint(256)})`;
+        this.behavior = this.behavior.bind(this);
+        document.addEventListener('refreshframe', this.behavior);
+    }
+
+    behavior(){
+        this.y -= this.forceY;
+        this.forceY += this.gravity;
+        this.rotation += this.rotationspeed;
+        this.rotation %= 360;
+        if (this.y > SCREEN.width + GLOBAL_OFFSET) {
+            killme(this);
+        }
+    }
+
+    draw(){
+        artful.DrawConfetti(this.x, this.y, this.rotation, this.color)
+    }
+}
+
 class ShadowMe{ //Mix-up. Trails behind the player
     constructor(posx, posy){
         this.x = posx;
         this.y = posy;
+        this.z = 5;
         this.active = false;
         this.moves = [];
-        console.log(this.moves)
         this.behavior = this.behavior.bind(this);
         document.addEventListener('player-movement', this.behavior);
     }

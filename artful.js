@@ -177,6 +177,18 @@ class Artful {
         this.ctx.fill();
     }
 
+    DrawConfetti(x,y,rot,color){
+        const ConfettiWidth = 10;
+        const ConfettiHeight = 20;
+        const ConfettiX = x + ConfettiWidth / 2;
+        const ConfettiY = y + ConfettiHeight / 2;
+        this.ctx.fillStyle = color;
+        this.ctx.translate(ConfettiX, ConfettiY);
+        this.ctx.rotate(rot * Math.PI / 180);
+        this.ctx.fillRect(-ConfettiWidth/2, -ConfettiHeight/2, ConfettiWidth, ConfettiHeight);
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+
     PulseEffect(){
         if (this.PulseActive) {
             this.PulseFrame += 1;
@@ -194,10 +206,48 @@ class Artful {
         }
     }
 
-    DrawText(text, size, font, color, x, y, IsCentered){
+    DrawInterlude(mixuptext, x){
+        this.ctx.fillStyle = "rgb(0,0,0)";
+        this.ctx.strokeStyle = "rgb(255,255,255)";
+        const rectX = x + 8;
+        const rectY = 90;
+        const rectWidth = this.inc * 5;
+        const rectHeight = 200;
+        this.ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+        this.ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
+        const text = mixuptext
+        const labelFont = {size: 66, font: "Comic Sans MS", bold: true};
+        const labelColor = "rgb(255,255,255)"
+        this.DrawText(text, labelFont,labelColor,rectX, rectHeight, true, this.inc*5);
+    }
+
+    DrawMixedUp(variant, x){
+        this.ctx.fillStyle = "rgb(0,0,0)";
+        this.ctx.strokeStyle = "rgb(255,255,255)";
+        const rectX = x + 8;
+        const rectY = 340;
+        const rectWidth = this.inc * 5;
+        const rectHeight = 200;
+        this.ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
+        this.ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
+        const nameFont = {size: variant.fontsize ?? 48, font: "Comic Sans MS", bold: true };
+        const nameColor = "rgb(255,255,255)";
+        const nameY = rectY + 75; 
+        this.DrawText(variant.name, nameFont, nameColor, rectX, nameY, true, rectWidth);
+        const descFont = {size: 24, font: "Comic Sans MS", bold: true };
+        const descColor = "rgb(255,255,255)";
+        const descY = rectY + 150; 
+        this.DrawText(variant.description, descFont, descColor, rectX, descY, true, rectWidth);
+    }
+
+    DrawText(text, fontdata, color, x, y, IsCentered, max){
         this.ctx.fillStyle = color;
-        this.ctx.font = `${size}px ${font}`
-        if (IsCentered){this.ctx.fillText(text, x+(this.inc*9 - this.ctx.measureText(text).width)/2, y)}
+        let isBolded = fontdata.bold ? "bold " : ""
+        this.ctx.font = isBolded + `${fontdata.size}px ${fontdata.font}`
+        if (IsCentered){
+            let textedge = max ? max : this.inc*9
+            this.ctx.fillText(text, x+(textedge - this.ctx.measureText(text).width)/2, y)
+        }
         else {this.ctx.fillText(text, x, y)}
     }
 

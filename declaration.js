@@ -1,5 +1,5 @@
 //FOR TESTING 
-const TESTINGMODE = false;
+const TESTINGMODE = true;
 //FOR TESTING 
 
 //GAMEPLAY VARIABLES//
@@ -11,7 +11,7 @@ var starthp = 5;
 var hp = 0;
 var healed = 0
 const tick = new CustomEvent('tick');
-const inputgrace = new CustomEvent('inputgrace');
+const RefreshOnFrame = new CustomEvent('refreshframe');
 const GLOBAL_OFFSET = 25;
 const BASEBPM = 120;
 var Interval = 0;

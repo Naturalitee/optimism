@@ -8,7 +8,7 @@
         <script src="./artful.js"></script>
         <script src="./declaration.js"></script>
         <script src="./webpagescripts.js"></script>
-        <script src="./inputs.js"></script>
+        <script src="./systems.js"></script>
         <script src="./main.js"></script>
         <link rel="icon" type="image/png" href="./assets/icon.png">
         <title>optimism.</title>
@@ -19,9 +19,30 @@
             const randomY = Math.floor(Math.random() * 2000);
             document.body.style.backgroundPosition = `${randomX}px ${randomY}px`;
         </script>
+        <div id="overlay" style="display: none;">
+            <div class="container" id="modifier-container">
+                <button id="modifier-exit" onclick="ModifierExit()">Exit</button>
+                <button id="modifier-save" onclick="ModifierSave()">Save & Exit</button>
+                <h1>Modifiers!</h1>
+                <div class="modifier-option">
+                    <div class="option-main">
+                        <h2 class="option-title">Difficulty:</h2>
+                        <select id="difficulty-select" onchange="DifficultyDesc()">
+                            <option value="Easy">Easy</option>
+                            <option value="Normal" selected="selected">Normal</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    <p id="difficulty-desc" class="option-description">Decides how much faster the game gets after every round.</p>
+                </div>
+                <p>more coming soon!</p>
+            </div>
+        </div>
         <div class="gamearea">
             <div id="misc-container">
-                <div id="modifiers"></div>
+                <div id="modifiers">
+                    <p id="modifiertitle">Modifiers</p>
+                </div>
                 <div id="up-next">
                     <p>Up Next:</p>
                     <div id="up-next-icons">
@@ -37,36 +58,20 @@
             <p style="margin-bottom: 1px;">BPM</p>
             <div class="container" style="justify-content: left;">
                 <input placeholder="Insert BPM here" id="BPMinput" style="font-size: 36px; width: 50%; color: white; background-color: black; border: 2px solid rgb(255, 255, 255); border-radius: 8px;">
-                <button onclick="(() => {
-                    const INPUT = document.getElementById('BPMinput');
-                    bpm = Number.isNaN(Number(INPUT.value)) ? 120 : Number(INPUT.value); 
-                    console.log(bpm);
-                    clearInterval(Interval);
-                    Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
-                    inputhandler.ChangeDelay(bpm);
-                })()">bpm</button>
+                <button onclick="TestSetBPM()">bpm</button>
             </div>
             <p style="margin-bottom: 1px;">Conjure Attack</p>
             <div class="container" style="justify-content: left;">
                 <input placeholder="Insert attack here" id="attackinput" style="font-size: 36px; width: 50%; color: white; background-color: black; border: 2px solid rgb(255, 255, 255); border-radius: 8px;">
-                <button onclick="(() => {
-                    const INPUT = document.getElementById('attackinput');
-                    attacker.tick = 0;
-                    attacker.load(Number(INPUT.value), true);
-                })()">Attack!</button>
+                <button onclick="TestAttack()">Attack!</button>
             </div>
             <p style="margin-bottom: 1px;">Conjure Mix-Up</p>
             <div class="container" style="justify-content: left;">
                 <select id= "variantpicker" style="font-size: 24px; width: 50%; color: white; background-color: black; border: 2px solid rgb(255, 255, 255); border-radius: 8px;">
                 </select>
-                <button onclick="(() => {
-                    mixer.pickedvariant = document.getElementById(`variantpicker`).value;
-                    mixer.variantapplier();
-                })()">Mix!</button>
-                <button onclick="(() => {
-                    variant = `none`;
-                    mixer.reset();
-                })()">Unmix!</button>
+                <button onclick="TestVariant(`mix`)">Mix!</button>
+                <button onclick="TestVariant(`unmix`)">Unmix!</button>
+                <button style="font-size: 28px;" onclick="TestVariant(`card`)">Show Card!</button>
             </div>
         </div>
         <div id="instructions">
@@ -133,10 +138,11 @@
         </div>
         <script> <!--Boy is too lazy to admin panel AHHHHH-->
             const DROPDOWN = document.getElementById("variantpicker");
-            mixer.variants.forEach(i => {
+            const varkeys = Object.keys(mixer.variants);
+            varkeys.forEach(key => {
                 const newOption = document.createElement("option");
-                newOption.textContent = i;
-                newOption.id = i;
+                newOption.textContent = key;
+                newOption.id = key;
                 DROPDOWN.appendChild(newOption);
             })
         </script>
