@@ -26,12 +26,13 @@ var startup = TESTINGMODE ? 5 : 0; //used for both intro and score anim
 var attacknum = 1;
 var looking = [0,0];
 var timelooking = 0;
+var ModifiersOpen = false;
 
 //MENU & BUTTONS//
 var globalvol = 1;
 var screenstate = TESTINGMODE ? "game" : "loading";
 BGMCOUNT = 10;
-SFXCOUNT = 11;
+SFXCOUNT = 16;
 SOUNDCOUNT = BGMCOUNT + SFXCOUNT + 3; //3 denotes special bgm
 var loadedsounds = 0;
 var soundspeed = bpm/BASEBPM
@@ -58,6 +59,10 @@ const PLAY1 = new Image();
 PLAY1.src = "./assets/play1.png";
 const PLAY2 = new Image();
 PLAY2.src = "./assets/play2.png";
+const MOD1 = new Image();
+MOD1.src = "./assets/modifiers1.png";
+const MOD2 = new Image();
+MOD2.src = "./assets/modifiers2.png";
 const GAMEOVER1 = new Image();
 GAMEOVER1.src = "./assets/gameover1.png";
 const GAMEOVER2 = new Image();
@@ -75,6 +80,12 @@ const MENUBOX = {
     y1: 520,
     x2: 433,
     y2: 548
+}
+const MODBOX = {
+    x1: 209,
+    y1: 434,
+    x2: 454,
+    y2: 480
 }
 
 

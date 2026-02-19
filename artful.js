@@ -93,6 +93,14 @@ class Artful {
         this.ctx.fillRect(posx , posy, width, height);
     }
 
+    DrawCellOutline(posx,posy,width,height,color){
+        this.ctx.beginPath();
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = 10;
+        const offset = this.ctx.lineWidth / 2;
+        this.ctx.strokeRect(posx + offset, posy + offset, width - (offset*2), height - (offset*2));
+    }
+
     DrawArrow(posx,posy,color,direction){
         this.ctx.lineWidth = 5;
         this.ctx.strokeStyle = color;
@@ -124,18 +132,19 @@ class Artful {
         this.ctx.stroke();
     }
 
-    ConsiderMover(x,y){
-        if (this.MoverStorage.some(itm => EqCheck(itm, [x,y]))){
+    ConsiderMover(item){
+        if (this.MoverStorage.some(itm => EqCheck(itm, [item.x,item.y]))){
             return true;
         }
         else{
-            this.MoverStorage.push([x,y]); 
+            if (item instanceof DMover) this.MoverStorage.push([item.x,item.y]); 
             return false;
         }
     }
 
     DrawStalkerFace(posx,posy,color){
         this.ctx.fillStyle = color;
+        this.ctx.lineWidth = 5;
         this.ctx.strokeStyle = color;
         this.ctx.beginPath();
         for (let i = 0; i < 2; i++) {
@@ -188,6 +197,58 @@ class Artful {
         this.ctx.fillRect(-ConfettiWidth/2, -ConfettiHeight/2, ConfettiWidth, ConfettiHeight);
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
+
+    DrawPop(x, y, timestamp) {
+    const TOTAL_FRAMES = 24;
+    const EXTEND_FRAMES = 6;      
+    const MOVE_FRAMES = 12;       
+    const SHRINK_FRAMES = 6;      
+    const MAX_LENGTH = 8;         
+    const MOVE_SPEED = 1;
+    const EXTEND_END = EXTEND_FRAMES - 1;
+    const MOVE_END = EXTEND_FRAMES + MOVE_FRAMES - 1;
+    const FINAL_OFFSET = MOVE_FRAMES * MOVE_SPEED;         
+    const frame = TOTAL_FRAMES - timestamp;
+    if (frame < 0 || frame >= TOTAL_FRAMES) return;
+    let length = 0;
+    let offset = 0;
+    if (frame <= EXTEND_END) {
+        length = (frame / EXTEND_END) * MAX_LENGTH;
+        offset = 0;
+    }
+    else if (frame <= MOVE_END) {
+        length = MAX_LENGTH;
+        offset = (frame - EXTEND_FRAMES) * MOVE_SPEED;
+    }
+    else {
+        const shrinkFrame = frame - (EXTEND_FRAMES + MOVE_FRAMES);
+        const t = shrinkFrame / (SHRINK_FRAMES - 1);
+        length = (1 - t) * MAX_LENGTH;
+        offset = FINAL_OFFSET;
+    }
+    const dirs = [
+        [1, 0], [0, 1], [-1, 0], [0, -1],
+        [1, 1], [-1, 1], [-1, -1], [1, -1]
+    ];
+    this.ctx.beginPath();
+    for (let [dx, dy] of dirs) {
+        if (dx !== 0 && dy !== 0) {
+            const inv = 1 / Math.sqrt(2);
+            dx *= inv;
+            dy *= inv;
+        }
+        const startX = x + dx * offset;
+        const startY = y + dy * offset;
+        const endX = startX + dx * length;
+        const endY = startY + dy * length;
+        this.ctx.strokeStyle = "rgb(255,255,255)";
+        this.ctx.lineWidth = 3;
+        this.ctx.moveTo(startX, startY);
+        this.ctx.lineTo(endX, endY);
+    }
+    this.ctx.stroke();
+}
+
 
     PulseEffect(){
         if (this.PulseActive) {

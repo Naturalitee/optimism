@@ -110,8 +110,8 @@ class DMover { //Starts on one of the edges and moves until it reaches the other
         let posx = GLOBAL_OFFSET + (this.x - 1) * inc;
         let posy = GLOBAL_OFFSET + (this.y - 1) * inc;
         let color;
-        let BackgroundSpaceTaken = artful.ConsiderMover(this.x, this.y);
-        if (BackgroundSpaceTaken){color = "rgba(0,0,0,0)"}
+        let IsBackgroundSpaceTaken = artful.ConsiderMover(this);
+        if (IsBackgroundSpaceTaken){color = "rgba(0,0,0,0)"}
         else {color = this.active ? `rgb(255, 255, 255)`:`rgba(0, 0, 0, 0)`;}
         let arrowcolor = this.active ? `rgb(0, 0, 0)`:`rgb(255, 0, 0)`
         artful.DrawHazardBase(posx,posy,inc,inc,color);
@@ -149,6 +149,8 @@ class DFirework extends DMover { //A Mover that explodes into four after a short
         let posy = GLOBAL_OFFSET + (this.y - 1) * inc;
         let activatedcolorset = this.duration >= 2 ? [`rgba(255, 136, 0, 1)`,`rgba(0, 0, 0, 1)`] : [`rgb(255, 0, 0)`,`rgb(255,255,255)`];
         let color = this.active ? activatedcolorset[0] : `rgba(0, 0, 0, 0)`;
+        let IsBackgroundSpaceTaken = artful.ConsiderMover(this);
+        if (IsBackgroundSpaceTaken) color = "rgba(0,0,0,0)"
         let arrowcolor = this.active ? activatedcolorset[1] : `rgb(255, 0, 0)`;
         artful.DrawHazardBase(posx,posy,inc,inc,color);
         artful.DrawArrow(posx,posy,arrowcolor,this.direction)
@@ -310,7 +312,7 @@ class DStalker{ //Follows the Player.
         this.lifespan();    
     }
     else{
-            this.grace -= 1;
+        this.grace -= 1;
     }
 }
 
@@ -356,6 +358,7 @@ class DStalker{ //Follows the Player.
     lifespan(){
         this.duration -= 1;
         if (this.duration == 0){
+            Dangers.push(new IPop(this.x,this.y));
             killme(this);
         }
     }
@@ -365,6 +368,7 @@ class DStalker{ //Follows the Player.
         let posy = GLOBAL_OFFSET + (this.y - 1) * inc;
         let color = this.active ? `rgba(255, 0, 0, 1)`:`rgba(255, 0, 0, 0.4)`;
         let scale = 1;
+        let IsBackgroundSpaceTaken = artful.ConsiderMover(this);
         if (!this.active) {
             if (this.animf != 16) {this.nextframe()}
             let t = (this.animf - 1) / 15;
@@ -373,8 +377,11 @@ class DStalker{ //Follows the Player.
         }
         let size = inc * scale;
         let offset = (inc - size) / 2;
-        artful.DrawHazardBase(posx + offset,posy + offset,size,size,color);
-        if (this.active) artful.DrawStalkerFace(posx,posy,"rgb(0,0,0)");
+        if (!IsBackgroundSpaceTaken) artful.DrawHazardBase(posx + offset,posy + offset,size,size,color);
+        if (this.active) {
+            if (!IsBackgroundSpaceTaken) artful.DrawStalkerFace(posx,posy,"rgb(0,0,0)")
+            else artful.DrawCellOutline(posx + offset,posy + offset,size,size,"rgb(193, 0, 0)");
+        }
     }
 }
 
@@ -412,6 +419,7 @@ class DSploder extends DStalker{
         let activatedcolorset = this.duration >= 2 ? [`rgba(255, 136, 0, 1)`,`rgba(0, 0, 0, 1)`] : [`rgb(255, 0, 0)`,`rgb(255,255,255)`];
         let color = this.active ? activatedcolorset[0] : `rgba(255, 136, 0, 0.4)`;
         let scale = 1;
+        let IsBackgroundSpaceTaken = artful.ConsiderMover(this);
         if (!this.active) {
             if (this.animf != 16) {this.nextframe()}
             let t = (this.animf - 1) / 15;
@@ -420,8 +428,11 @@ class DSploder extends DStalker{
         }
         let size = inc * scale;
         let offset = (inc - size) / 2;
-        artful.DrawHazardBase(posx + offset,posy + offset,size,size,color);
-        if (this.active) artful.DrawStalkerFace(posx,posy,activatedcolorset[1]);
+        if (!IsBackgroundSpaceTaken) artful.DrawHazardBase(posx + offset,posy + offset,size,size,color);
+        if (this.active) {
+            if (!IsBackgroundSpaceTaken) artful.DrawStalkerFace(posx,posy,activatedcolorset[1]);
+            else artful.DrawCellOutline(posx + offset,posy + offset,size,size,"rgb(193, 0, 0)");
+        }
     }
 }
 
@@ -455,6 +466,7 @@ class DSeeker extends DStalker{
         let posy = GLOBAL_OFFSET + (this.y - 1) * inc;
         let color = this.active ? `rgb(183, 0, 0)`:`rgba(255, 0, 0, 0.4)`;
         let scale = 1;
+        let IsBackgroundSpaceTaken = artful.ConsiderMover(this);
         if (!this.active) {
             if (this.animf != 16) {this.nextframe()}
             let t = (this.animf - 1) / 15;
@@ -463,8 +475,11 @@ class DSeeker extends DStalker{
         }
         let size = inc * scale;
         let offset = (inc - size) / 2;
-        artful.DrawHazardBase(posx + offset,posy + offset,size,size,color);
-        if (this.active) artful.DrawSeekerFace(posx,posy,"rgb(0,0,0)");
+        if (!IsBackgroundSpaceTaken) artful.DrawHazardBase(posx + offset,posy + offset,size,size,color);
+        if (this.active) {
+            if (!IsBackgroundSpaceTaken) artful.DrawSeekerFace(posx,posy,"rgb(0,0,0)");
+            else artful.DrawCellOutline(posx + offset,posy + offset,size,size,"rgb(193, 0, 0)");
+        }
     }
 }
 
@@ -478,6 +493,7 @@ class Indicator{ //Non-collide indicators (also literally anything that should e
         this.active = false;
         this.behavior = this.behavior.bind(this);
         if (!this.props.RefreshOnFrame) document.addEventListener('tick', this.behavior);
+        else document.addEventListener('refreshframe', this.behavior);
     }
 
     behavior(){
@@ -575,8 +591,6 @@ class IConfetti extends Indicator{ //Is specifically for when the player success
         this.forceY =  Math.random() * 10; //gravity. also make it random so theres kinda a delay?
         this.gravity = -0.16; //how much faster it gets every frame.
         this.color = `rgb(${Randint(256)},${Randint(256)},${Randint(256)})`;
-        this.behavior = this.behavior.bind(this);
-        document.addEventListener('refreshframe', this.behavior);
     }
 
     behavior(){
@@ -591,6 +605,18 @@ class IConfetti extends Indicator{ //Is specifically for when the player success
 
     draw(){
         artful.DrawConfetti(this.x, this.y, this.rotation, this.color)
+    }
+}
+
+class IPop extends Indicator {
+    constructor(posx,posy){
+        super(posx, posy, 24, {RefreshOnFrame: true, zorder: 1});
+    }
+
+    draw(inc){
+        let posx = GLOBAL_OFFSET + (this.x * inc - (inc / 2));
+        let posy = GLOBAL_OFFSET + (this.y * inc - (inc / 2));
+        artful.DrawPop(posx,posy,this.duration);
     }
 }
 

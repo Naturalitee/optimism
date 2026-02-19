@@ -53,17 +53,21 @@ function UpNextHandler(list){
 function ModifierExit(){
     let modifierOverlay = document.querySelector("#overlay");
     modifierOverlay.style.display = "none";
+    ModifiersOpen = false;
+    modifierhandler.SetUpModifiers();
 }
 
 function ModifierSave(){
     let difficulty = document.querySelector("#difficulty-select");
     modifierhandler.modifiers = {difficulty: difficulty.value}
-    modifierhandler.SetUpModifiers();
     ModifierDivSetup(modifierhandler.modifiers);
     ModifierExit();
 }
 
 function ModifierDivSetup(data){
+    let divchildren = document.querySelectorAll("#modifiers > p:not(#modifiertitle)")
+    console.log(divchildren)
+    divchildren.forEach(child => child.remove());
     const defaults = {
         difficulty: "Normal"
     }

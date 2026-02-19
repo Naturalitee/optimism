@@ -14,6 +14,7 @@ class InputHandler {
     }
     
     ClickDetec(e){
+        if (ModifiersOpen) return;
         const canvas = document.getElementById("Canvas");
         const screen = canvas.getBoundingClientRect();
         if (screenstate == "warning" && (e.clientX >= screen.x && e.clientX <= screen.x + screen.width) && (e.clientY >= screen.y && e.clientY <= screen.y + screen.height)){
@@ -23,11 +24,16 @@ class InputHandler {
         }
         let cx = (e.clientX - screen.left) * (canvas.width / screen.width);
         let cy = (e.clientY - screen.top) * (canvas.height / screen.height);
+        //console.log(cx, cy) //uncomment for testing
         if (clickgrace == 0 && screenstate == "menu" && (cx >= PLAYBOX.x1 && cx <= PLAYBOX.x2) && (cy >= PLAYBOX.y1 && cy <= PLAYBOX.y2)){
-            transitiontime = true
+            transitiontime = true;
+        }
+        if (clickgrace == 0 && screenstate == "menu" && (cx >= MODBOX.x1 && cx <= MODBOX.x2) && (cy >= MODBOX.y1 && cy <= MODBOX.y2)){
+            ModifiersOpen = true;
+            document.querySelector("#overlay").style.display = "flex";
         }
         if (startup == 271 && screenstate == "gameover" && (cx >= MENUBOX.x1 && cx <= MENUBOX.x2) && (cy >= MENUBOX.y1 && cy <= MENUBOX.y2)){
-            screenstate = "menu"
+            screenstate = "menu";
         }
     }
     

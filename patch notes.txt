@@ -3,9 +3,11 @@
 > and also updated one of them lol
 > Added a hollow shell of a modifier screen! that comes next update!
 > Added an Up Next tab so you can anticipate what comes next!
+> Added like 3 new hazards!
+> Added 4 new Mixups!
 > Reworked how some warps behaved!
 > Reworked the movement system. You can now hold down! WOAH!
-> Nerfed Attack 37, it was too hard at faster speeds!
+> Nerfed Attack 37 and 10, they were a bit too hard at faster speeds!
 > Nerfed Attack 24 and 43!
 > Fixed a couple of bugs and added some more!
 

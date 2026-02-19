@@ -117,8 +117,7 @@ function DrawHazards(inc){ //draw objects that hurt
     Dangers.forEach(function(item){
         item.draw(inc);
     })
-    artful.MoverStorage = [];
-}
+    artful.MoverStorage = [];}
 
 function mainloop() { //draw everything
     if (!SCREEN){
@@ -158,6 +157,7 @@ function mainloop() { //draw everything
         }
         artful.DrawImage(textanim == 1 ? TITLE1 : TITLE2, 40, -230);
         artful.DrawImage(textanim == 1 ? PLAY1 : PLAY2, 40, 0);
+        artful.DrawImage(textanim == 1 ? MOD1 : MOD2, 40, 130);
         artful.DrawText("volume (use +/- keys to control)",{size:24, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,550,true);
         artful.DrawText(globalvol*10,{size:36, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,600,true)
         CTX.fillStyle = `rgba(0, 0, 0, ${transition/100})`;
@@ -184,7 +184,7 @@ function mainloop() { //draw everything
             textanimtick = 0;
         }
     }
-    if (screenstate == "punishment"){artful.DrawText("RIP old punishment screen :(",36,"Comic Sans MS","rgb(255,255,255)",GLOBAL_OFFSET,350)}
+    if (screenstate == "punishment"){artful.DrawText("RIP old punishment screen :(",{size: 36, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,350, true)}
     if (screenstate == "game"){
         DrawHazards(INCREMENT);
         artful.DrawGrid(startup);
@@ -437,7 +437,7 @@ class Mixer{ //its for the mixups
         let sound = new Audio(`./sound/sfx/${input}.mp3`);
         sound.currentTime = startpos;
         sound.playbackRate = PlaybackRate * soundspeed;
-        sound.volume = vol;
+        sound.volume = vol - (1-globalvol);
         sound.play();
     }
 }
