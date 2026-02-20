@@ -1,58 +1,64 @@
 class Artful {
-    constructor(ctx, inc){
+    constructor(game, ctx, inc) {
+        this.game = game;
         this.ctx = ctx;
         this.inc = inc;
-        this.maxx = SCREEN.clientWidth;
-        this.maxy = SCREEN.clientHeight;
+        this.maxx = game.SCREEN.clientWidth;
+        this.maxy = game.SCREEN.clientHeight;
+        this.playerOpac = 1;
+        this.eyeOffset = [0, 0];
+        this.eyeOffsetFrames = 0;
+        this.textFace = 1;
+        this.textAnimFrames = 0;
         this.PulseActive = false;
         this.PulseFrame = 0;
         this.MoverStorage = [];
     }
 
     DrawFrame() {
-    this.ctx.beginPath();
-    this.ctx.fillStyle = `rgba(0, 0, 0, 1)`;
-    this.ctx.fillRect(GLOBAL_OFFSET,GLOBAL_OFFSET,this.maxx-GLOBAL_OFFSET*2,this.maxy-GLOBAL_OFFSET*2);
-    this.ctx.lineWidth = 5;
-    this.ctx.strokeStyle = this.BorderColor();
-    this.ctx.strokeRect(22.5,22.5,this.maxx-45,this.maxy-45);
+        this.ctx.beginPath();
+        this.ctx.fillStyle = `rgba(0, 0, 0, 1)`;
+        this.ctx.fillRect(GLOBAL_OFFSET, GLOBAL_OFFSET, this.maxx - GLOBAL_OFFSET * 2, this.maxy - GLOBAL_OFFSET * 2);
+        this.ctx.lineWidth = 5;
+        this.ctx.strokeStyle = this.BorderColor();
+        this.ctx.strokeRect(22.5, 22.5, this.maxx - 45, this.maxy - 45);
     }
 
-    DrawGrid(startup){
+    DrawGrid(startup) {
         let x = 0;
         this.ctx.lineWidth = 5;
         this.ctx.strokeStyle = `rgb(137, 137, 137)`;
         for (let i = 0; i < 8; ++i) {
-            if (startup >= 2){
+            if (startup >= 2) {
                 x += this.inc;
                 this.ctx.beginPath();
-                this.ctx.moveTo(x+GLOBAL_OFFSET, GLOBAL_OFFSET);
-                this.ctx.lineTo(x+GLOBAL_OFFSET, this.maxy-GLOBAL_OFFSET);
+                this.ctx.moveTo(x + GLOBAL_OFFSET, GLOBAL_OFFSET);
+                this.ctx.lineTo(x + GLOBAL_OFFSET, this.maxy - GLOBAL_OFFSET);
                 this.ctx.stroke();
             }
-        }  
+        }
         x = 0;
         for (let i = 0; i < 8; ++i) {
-            if (startup >= 3){
+            if (startup >= 3) {
                 x += this.inc;
                 this.ctx.beginPath();
-                this.ctx.moveTo(GLOBAL_OFFSET, x+GLOBAL_OFFSET);
-                this.ctx.lineTo(this.maxx-GLOBAL_OFFSET, x+GLOBAL_OFFSET);
+                this.ctx.moveTo(GLOBAL_OFFSET, x + GLOBAL_OFFSET);
+                this.ctx.lineTo(this.maxx - GLOBAL_OFFSET, x + GLOBAL_OFFSET);
                 this.ctx.stroke();
             }
         }
     }
 
-    DrawCircle(x,y,scale,color,outline){ 
+    DrawCircle(x, y, scale, color, outline) {
         this.ctx.beginPath();
-        this.ctx.arc(x, y, 20*scale, 0, Math.PI * 2);
+        this.ctx.arc(x, y, 20 * scale, 0, Math.PI * 2);
         this.ctx.strokeStyle = outline;
         this.ctx.stroke();
         this.ctx.fillStyle = color;
         this.ctx.fill();
     }
 
-    DrawMyEyes(x,y,text,size,font,color,locationx,offsetx,locationy,offsety,weight){
+    DrawMyEyes(x, y, text, size, font, color, locationx, offsetx, locationy, offsety, weight) {
         let fweight = weight ?? "";
         this.ctx.fillStyle = color;
         this.ctx.font = `${fweight} ${size}px ${font}`;
@@ -62,87 +68,81 @@ class Artful {
         this.ctx.textAlign = "start";
     }
 
-    DrawMyMouth(x,y,text,size,font,color,locationx,locationy,rot,weight){
+    DrawMyMouth(x, y, text, size, font, color, locationx, locationy, rot, weight) {
         let fweight = weight ?? "";
         this.ctx.fillStyle = color;
         this.ctx.translate(x, y);
-        if (rot){this.ctx.rotate(rot * Math.PI / 180)}
+        if (rot) { this.ctx.rotate(rot * Math.PI / 180); }
         this.ctx.textAlign = "center";
         this.ctx.font = `${fweight} ${size}px ${font}`;
-        this.ctx.fillText(text,locationx, locationy);
+        this.ctx.fillText(text, locationx, locationy);
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
         this.ctx.textAlign = "start";
     }
 
-    BorderColor(){
-        if (healed != 0){
-            return `rgb(0,255,0)`
-        }
-        else if (hurtcd >= 170){
-            return `rgb(255,0,0)`
-        }
-        else {
-            return `rgb(137,137,137)`
-        }
+    BorderColor() {
+        const game = this.game;
+        if (game.healed != 0) { return `rgb(0,255,0)`; }
+        else if (game.hurtCooldown >= 170) { return `rgb(255,0,0)`; }
+        else { return `rgb(137,137,137)`; }
     }
 
-    DrawHazardBase(posx,posy,width,height,color){
+    DrawHazardBase(posx, posy, width, height, color) {
         this.ctx.beginPath();
         this.ctx.fillStyle = color;
         this.ctx.lineWidth = 0;
-        this.ctx.fillRect(posx , posy, width, height);
+        this.ctx.fillRect(posx, posy, width, height);
     }
 
-    DrawCellOutline(posx,posy,width,height,color){
+    DrawCellOutline(posx, posy, width, height, color) {
         this.ctx.beginPath();
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = 10;
         const offset = this.ctx.lineWidth / 2;
-        this.ctx.strokeRect(posx + offset, posy + offset, width - (offset*2), height - (offset*2));
+        this.ctx.strokeRect(posx + offset, posy + offset, width - (offset * 2), height - (offset * 2));
     }
 
-    DrawArrow(posx,posy,color,direction){
+    DrawArrow(posx, posy, color, direction) {
         this.ctx.lineWidth = 5;
         this.ctx.strokeStyle = color;
-    switch (direction){ //creates arrows; there is a more efficient way to do this but I have no clue how so this will do ig
-        case "Up":
-            this.ctx.moveTo(posx + (this.inc/2) - 10, posy + (this.inc/2) + 5);
-            this.ctx.lineTo(posx + (this.inc/2), posy + (this.inc/2) - 5);
-            this.ctx.lineTo(posx + (this.inc/2) + 10, posy + (this.inc/2) + 5);
-            break;
-        case "Down":
-            this.ctx.moveTo(posx + (this.inc/2) - 10, posy + (this.inc/2) - 5);
-            this.ctx.lineTo(posx + (this.inc/2), posy + (this.inc/2) + 5);
-            this.ctx.lineTo(posx + (this.inc/2) + 10, posy + (this.inc/2) - 5);
-            break;
-        case "Left":
-            this.ctx.moveTo(posx + (this.inc/2) + 5, posy + (this.inc/2) - 10);
-            this.ctx.lineTo(posx + (this.inc/2) - 5, posy + (this.inc/2));
-            this.ctx.lineTo(posx + (this.inc/2) + 5, posy + (this.inc/2) + 10);
-            break;
-        case "Right":
-            this.ctx.moveTo(posx + (this.inc/2) - 5, posy + (this.inc/2) - 10);
-            this.ctx.lineTo(posx + (this.inc/2) + 5, posy + (this.inc/2));
-            this.ctx.lineTo(posx + (this.inc/2) - 5, posy + (this.inc/2) + 10);
-            break;
-        default:
-            console.log("something broke lil bro");
-            break;
+        switch (direction) {
+            case "Up":
+                this.ctx.moveTo(posx + (this.inc / 2) - 10, posy + (this.inc / 2) + 5);
+                this.ctx.lineTo(posx + (this.inc / 2), posy + (this.inc / 2) - 5);
+                this.ctx.lineTo(posx + (this.inc / 2) + 10, posy + (this.inc / 2) + 5);
+                break;
+            case "Down":
+                this.ctx.moveTo(posx + (this.inc / 2) - 10, posy + (this.inc / 2) - 5);
+                this.ctx.lineTo(posx + (this.inc / 2), posy + (this.inc / 2) + 5);
+                this.ctx.lineTo(posx + (this.inc / 2) + 10, posy + (this.inc / 2) - 5);
+                break;
+            case "Left":
+                this.ctx.moveTo(posx + (this.inc / 2) + 5, posy + (this.inc / 2) - 10);
+                this.ctx.lineTo(posx + (this.inc / 2) - 5, posy + (this.inc / 2));
+                this.ctx.lineTo(posx + (this.inc / 2) + 5, posy + (this.inc / 2) + 10);
+                break;
+            case "Right":
+                this.ctx.moveTo(posx + (this.inc / 2) - 5, posy + (this.inc / 2) - 10);
+                this.ctx.lineTo(posx + (this.inc / 2) + 5, posy + (this.inc / 2));
+                this.ctx.lineTo(posx + (this.inc / 2) - 5, posy + (this.inc / 2) + 10);
+                break;
+            default:
+                console.log("something broke lil bro");
+                break;
         }
         this.ctx.stroke();
     }
 
-    ConsiderMover(item){
-        if (this.MoverStorage.some(itm => EqCheck(itm, [item.x,item.y]))){
+    ConsiderMover(item) {
+        if (this.MoverStorage.some(itm => EqCheck(itm, [item.x, item.y]))) {
             return true;
-        }
-        else{
-            if (item instanceof DMover) this.MoverStorage.push([item.x,item.y]); 
+        } else {
+            if (item instanceof DMover) this.MoverStorage.push([item.x, item.y]);
             return false;
         }
     }
 
-    DrawStalkerFace(posx,posy,color){
+    DrawStalkerFace(posx, posy, color) {
         this.ctx.fillStyle = color;
         this.ctx.lineWidth = 5;
         this.ctx.strokeStyle = color;
@@ -153,11 +153,11 @@ class Artful {
         this.ctx.fill();
         this.ctx.closePath();
         this.ctx.beginPath();
-        this.ctx.moveTo(posx+5, posy+10);
-        this.ctx.lineTo(posx+GLOBAL_OFFSET, posy+20);
-        this.ctx.moveTo(posx+61.66, posy+10);
-        this.ctx.lineTo(posx+41.66, posy+20);
-        let mouthPoints = [[15, 51.66],[33.33, 41.66],[51.66, 51.66]];
+        this.ctx.moveTo(posx + 5, posy + 10);
+        this.ctx.lineTo(posx + GLOBAL_OFFSET, posy + 20);
+        this.ctx.moveTo(posx + 61.66, posy + 10);
+        this.ctx.lineTo(posx + 41.66, posy + 20);
+        let mouthPoints = [[15, 51.66], [33.33, 41.66], [51.66, 51.66]];
         this.ctx.moveTo(posx + mouthPoints[0][0], posy + mouthPoints[0][1]);
         for (let i = 1; i < mouthPoints.length; i++) {
             this.ctx.lineTo(posx + mouthPoints[i][0], posy + mouthPoints[i][1]);
@@ -165,9 +165,9 @@ class Artful {
         this.ctx.stroke();
     }
 
-    DrawSeekerFace(posx,posy,color){
+    DrawSeekerFace(posx, posy, color) {
         this.ctx.strokeStyle = color;
-        this.ctx.fillStyle = "rgb(255,255,255)"
+        this.ctx.fillStyle = "rgb(255,255,255)";
         this.ctx.beginPath();
         this.ctx.moveTo(posx + this.inc / 2, posy + 15);
         this.ctx.lineTo(posx + this.inc - 5, posy + this.inc / 2);
@@ -176,7 +176,7 @@ class Artful {
         this.ctx.closePath();
         this.ctx.stroke();
         this.ctx.fill();
-        this.ctx.fillStyle = "rgb(0, 0, 0)"
+        this.ctx.fillStyle = "rgb(0, 0, 0)";
         this.ctx.beginPath();
         this.ctx.moveTo(posx + this.inc / 2, posy + this.inc - 15);
         this.ctx.lineTo(posx + this.inc - 25, posy + this.inc / 2);
@@ -186,7 +186,7 @@ class Artful {
         this.ctx.fill();
     }
 
-    DrawConfetti(x,y,rot,color){
+    DrawConfetti(x, y, rot, color) {
         const ConfettiWidth = 10;
         const ConfettiHeight = 20;
         const ConfettiX = x + ConfettiWidth / 2;
@@ -194,80 +194,77 @@ class Artful {
         this.ctx.fillStyle = color;
         this.ctx.translate(ConfettiX, ConfettiY);
         this.ctx.rotate(rot * Math.PI / 180);
-        this.ctx.fillRect(-ConfettiWidth/2, -ConfettiHeight/2, ConfettiWidth, ConfettiHeight);
+        this.ctx.fillRect(-ConfettiWidth / 2, -ConfettiHeight / 2, ConfettiWidth, ConfettiHeight);
         this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     }
 
     DrawPop(x, y, timestamp) {
-    const TOTAL_FRAMES = 24;
-    const EXTEND_FRAMES = 6;      
-    const MOVE_FRAMES = 12;       
-    const SHRINK_FRAMES = 6;      
-    const MAX_LENGTH = 8;         
-    const MOVE_SPEED = 1;
-    const EXTEND_END = EXTEND_FRAMES - 1;
-    const MOVE_END = EXTEND_FRAMES + MOVE_FRAMES - 1;
-    const FINAL_OFFSET = MOVE_FRAMES * MOVE_SPEED;         
-    const frame = TOTAL_FRAMES - timestamp;
-    if (frame < 0 || frame >= TOTAL_FRAMES) return;
-    let length = 0;
-    let offset = 0;
-    if (frame <= EXTEND_END) {
-        length = (frame / EXTEND_END) * MAX_LENGTH;
-        offset = 0;
-    }
-    else if (frame <= MOVE_END) {
-        length = MAX_LENGTH;
-        offset = (frame - EXTEND_FRAMES) * MOVE_SPEED;
-    }
-    else {
-        const shrinkFrame = frame - (EXTEND_FRAMES + MOVE_FRAMES);
-        const t = shrinkFrame / (SHRINK_FRAMES - 1);
-        length = (1 - t) * MAX_LENGTH;
-        offset = FINAL_OFFSET;
-    }
-    const dirs = [
-        [1, 0], [0, 1], [-1, 0], [0, -1],
-        [1, 1], [-1, 1], [-1, -1], [1, -1]
-    ];
-    this.ctx.beginPath();
-    for (let [dx, dy] of dirs) {
-        if (dx !== 0 && dy !== 0) {
-            const inv = 1 / Math.sqrt(2);
-            dx *= inv;
-            dy *= inv;
+        const TOTAL_FRAMES = 24;
+        const EXTEND_FRAMES = 6;
+        const MOVE_FRAMES = 12;
+        const SHRINK_FRAMES = 6;
+        const MAX_LENGTH = 8;
+        const MOVE_SPEED = 1;
+        const EXTEND_END = EXTEND_FRAMES - 1;
+        const MOVE_END = EXTEND_FRAMES + MOVE_FRAMES - 1;
+        const FINAL_OFFSET = MOVE_FRAMES * MOVE_SPEED;
+        const frame = TOTAL_FRAMES - timestamp;
+        if (frame < 0 || frame >= TOTAL_FRAMES) return;
+        let length = 0;
+        let offset = 0;
+        if (frame <= EXTEND_END) {
+            length = (frame / EXTEND_END) * MAX_LENGTH;
+            offset = 0;
+        } else if (frame <= MOVE_END) {
+            length = MAX_LENGTH;
+            offset = (frame - EXTEND_FRAMES) * MOVE_SPEED;
+        } else {
+            const shrinkFrame = frame - (EXTEND_FRAMES + MOVE_FRAMES);
+            const t = shrinkFrame / (SHRINK_FRAMES - 1);
+            length = (1 - t) * MAX_LENGTH;
+            offset = FINAL_OFFSET;
         }
-        const startX = x + dx * offset;
-        const startY = y + dy * offset;
-        const endX = startX + dx * length;
-        const endY = startY + dy * length;
-        this.ctx.strokeStyle = "rgb(255,255,255)";
-        this.ctx.lineWidth = 3;
-        this.ctx.moveTo(startX, startY);
-        this.ctx.lineTo(endX, endY);
+        const dirs = [
+            [1, 0], [0, 1], [-1, 0], [0, -1],
+            [1, 1], [-1, 1], [-1, -1], [1, -1]
+        ];
+        this.ctx.beginPath();
+        for (let [dx, dy] of dirs) {
+            if (dx !== 0 && dy !== 0) {
+                const inv = 1 / Math.sqrt(2);
+                dx *= inv;
+                dy *= inv;
+            }
+            const startX = x + dx * offset;
+            const startY = y + dy * offset;
+            const endX = startX + dx * length;
+            const endY = startY + dy * length;
+            this.ctx.strokeStyle = "rgb(255,255,255)";
+            this.ctx.lineWidth = 3;
+            this.ctx.moveTo(startX, startY);
+            this.ctx.lineTo(endX, endY);
+        }
+        this.ctx.stroke();
     }
-    this.ctx.stroke();
-}
 
-
-    PulseEffect(){
+    PulseEffect() {
         if (this.PulseActive) {
             this.PulseFrame += 1;
-            let progress = this.PulseFrame / 60; 
-        if (progress > 1){progress = 1};
-        let ease = 1 - Math.pow(1 - progress, 3);
-        this.ctx.strokeStyle = `rgba(255,255,255,${1 - ease})`;
-        let x = 22.5 * (1 - ease);
-        let y = 22.5 * (1 - ease);
-        this.ctx.strokeRect(x, y, this.maxx - x * 2, this.maxy - y * 2);
-        if (this.PulseFrame >= 60) {
-            this.PulseActive = false;
-            this.PulseFrame = 0;
+            let progress = this.PulseFrame / 60;
+            if (progress > 1) { progress = 1; }
+            let ease = 1 - Math.pow(1 - progress, 3);
+            this.ctx.strokeStyle = `rgba(255,255,255,${1 - ease})`;
+            let x = 22.5 * (1 - ease);
+            let y = 22.5 * (1 - ease);
+            this.ctx.strokeRect(x, y, this.maxx - x * 2, this.maxy - y * 2);
+            if (this.PulseFrame >= 60) {
+                this.PulseActive = false;
+                this.PulseFrame = 0;
             }
         }
     }
 
-    DrawInterlude(mixuptext, x){
+    DrawInterlude(mixuptext, x) {
         this.ctx.fillStyle = "rgb(0,0,0)";
         this.ctx.strokeStyle = "rgb(255,255,255)";
         const rectX = x + 8;
@@ -276,13 +273,10 @@ class Artful {
         const rectHeight = 200;
         this.ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
         this.ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
-        const text = mixuptext
-        const labelFont = {size: 66, font: "Comic Sans MS", bold: true};
-        const labelColor = "rgb(255,255,255)"
-        this.DrawText(text, labelFont,labelColor,rectX, rectHeight, true, this.inc*5);
+        this.DrawText(mixuptext, {size: 66, font: "Comic Sans MS", bold: true}, "rgb(255,255,255)", rectX, rectHeight, true, this.inc * 5);
     }
 
-    DrawMixedUp(variant, x){
+    DrawMixedUp(variant, x) {
         this.ctx.fillStyle = "rgb(0,0,0)";
         this.ctx.strokeStyle = "rgb(255,255,255)";
         const rectX = x + 8;
@@ -291,31 +285,25 @@ class Artful {
         const rectHeight = 200;
         this.ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
         this.ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
-        const nameFont = {size: variant.fontsize ?? 48, font: "Comic Sans MS", bold: true };
-        const nameColor = "rgb(255,255,255)";
-        const nameY = rectY + 75; 
-        this.DrawText(variant.name, nameFont, nameColor, rectX, nameY, true, rectWidth);
-        const descFont = {size: 24, font: "Comic Sans MS", bold: true };
-        const descColor = "rgb(255,255,255)";
-        const descY = rectY + 150; 
-        this.DrawText(variant.description, descFont, descColor, rectX, descY, true, rectWidth);
+        this.DrawText(variant.name, {size: variant.fontsize ?? 48, font: "Comic Sans MS", bold: true}, "rgb(255,255,255)", rectX, rectY + 75, true, rectWidth);
+        this.DrawText(variant.description, {size: 24, font: "Comic Sans MS", bold: true}, "rgb(255,255,255)", rectX, rectY + 150, true, rectWidth);
     }
 
-    DrawText(text, fontdata, color, x, y, IsCentered, max){
+    DrawText(text, fontdata, color, x, y, IsCentered, max) {
         this.ctx.fillStyle = color;
-        let isBolded = fontdata.bold ? "bold " : ""
-        this.ctx.font = isBolded + `${fontdata.size}px ${fontdata.font}`
-        if (IsCentered){
-            let textedge = max ? max : this.inc*9
-            this.ctx.fillText(text, x+(textedge - this.ctx.measureText(text).width)/2, y)
+        let isBolded = fontdata.bold ? "bold " : "";
+        this.ctx.font = isBolded + `${fontdata.size}px ${fontdata.font}`;
+        if (IsCentered) {
+            let textedge = max ? max : this.inc * 9;
+            this.ctx.fillText(text, x + (textedge - this.ctx.measureText(text).width) / 2, y);
+        } else {
+            this.ctx.fillText(text, x, y);
         }
-        else {this.ctx.fillText(text, x, y)}
     }
 
-    DrawImage(img, x, y, IsFree, width, length){ 
-        if (width && length){this.ctx.drawImage(img,x,y,width,length)}
-        else if (IsFree){this.ctx.drawImage(img,x,y)} //IsFree determines if image stays in the center because I frankly cant be bothered
-        else{this.ctx.drawImage(img, x+(this.inc*9 - img.width)/ 2, y+(img.height/2))}
+    DrawImage(img, x, y, IsFree, width, length) {
+        if (width && length) { this.ctx.drawImage(img, x, y, width, length); }
+        else if (IsFree) { this.ctx.drawImage(img, x, y); }
+        else { this.ctx.drawImage(img, x + (this.inc * 9 - img.width) / 2, y + (img.height / 2)); }
     }
-
 }

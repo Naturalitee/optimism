@@ -2,31 +2,12 @@
 const TESTINGMODE = true;
 //FOR TESTING 
 
-//GAMEPLAY VARIABLES//
-const FPS_IN_MS = 16.67;
-var fps = setInterval(() => mainloop(), FPS_IN_MS); //60fps
-var PlayerPos = [5, 5];
-var bpm = 120;
-var starthp = 5;
-var hp = 0;
-var healed = 0
+//GAMEPLAY constants//
+const FPS_IN_MS = 16.67; 
 const tick = new CustomEvent('tick');
 const RefreshOnFrame = new CustomEvent('refreshframe');
 const GLOBAL_OFFSET = 25;
 const BASEBPM = 120;
-var Interval = 0;
-let SCREEN, CTX, INCREMENT, artful; //the 4 problem children
-var variant = "none";
-var ishurt = false;
-var isinterlude = false;
-var playeropac = 1;
-var hurtcd = 0;
-var beat = 0;
-var startup = TESTINGMODE ? 5 : 0; //used for both intro and score anim
-var attacknum = 1;
-var looking = [0,0];
-var timelooking = 0;
-var ModifiersOpen = false;
 
 //MENU & BUTTONS//
 var globalvol = 1;
@@ -34,16 +15,9 @@ var screenstate = TESTINGMODE ? "game" : "loading";
 BGMCOUNT = 10;
 SFXCOUNT = 16;
 SOUNDCOUNT = BGMCOUNT + SFXCOUNT + 3; //3 denotes special bgm
-var loadedsounds = 0;
-var soundspeed = bpm/BASEBPM
-var textanim = 1;
-var secret = false;
-var textanimtick = 0;
-var transition = 0; //its a transition!
-var musicfade = 0; //its a transition, for the ears!
-var transitiontime = false; //is it time to transition?
-var clickgrace = 10;
 var currenttab = "none";
+var ModifiersOpen = false;
+
 
 
 //ATTACKS//

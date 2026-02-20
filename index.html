@@ -137,15 +137,6 @@
         <div id="lg" ></div><img src="./assets/logo.png" alt="Optimism!" onclick="rippunish()" style="margin: auto; display: block;"></div>
         </div>
         <script> <!--Boy is too lazy to admin panel AHHHHH-->
-            const DROPDOWN = document.getElementById("variantpicker");
-            const varkeys = Object.keys(mixer.variants);
-            varkeys.forEach(key => {
-                const newOption = document.createElement("option");
-                newOption.textContent = key;
-                newOption.id = key;
-                DROPDOWN.appendChild(newOption);
-            })
-            if (!TESTINGMODE) document.querySelector("#adminpanel").style.display = "none";
         </script>
     </body>
 </html>

@@ -1,24 +1,24 @@
 function CreateHeart(){
     let lives = document.getElementById("lifecontainer");
-    if (hp <= 5){
+    if (GAME.hp <= 5){
         const img = document.createElement('img');
         img.src = "./assets/life.png";
         img.alt = 'life';
         lives.appendChild(img);
     }
     else{
-        const target = lives.children[hp - 6]
+        const target = lives.children[GAME.hp - 6]
         target.style.filter = 'hue-rotate(250deg)';
     }
 }
 
 function RemoveHeart(){
     let lives = document.getElementById("lifecontainer");
-    if (hp <= 5){
+    if (GAME.hp <= 5){
         lives.lastElementChild.remove();
     }
     else {
-        const target = lives.children[hp-6];
+        const target = lives.children[GAME.hp-6];
         target.style.filter = 'hue-rotate(0deg)';
     }
 }
@@ -47,20 +47,32 @@ function UpNextHandler(list){
     }
 }
 
+function initalizeAdminPanel(){
+    const DROPDOWN = document.getElementById("variantpicker");
+    const varkeys = Object.keys(GAME.mixer.variants);
+    varkeys.forEach(key => {
+        const newOption = document.createElement("option");
+        newOption.textContent = key;
+        newOption.id = key;
+        DROPDOWN.appendChild(newOption);
+    })
+    if (!TESTINGMODE) document.querySelector("#adminpanel").style.display = "none";
+}
+
 
 //modifier section
 
 function ModifierExit(){
     let modifierOverlay = document.querySelector("#overlay");
     modifierOverlay.style.display = "none";
-    ModifiersOpen = false;
-    modifierhandler.SetUpModifiers();
+    GAME.modifierhandler.modifierTabOpen = false;
+    GAME.modifierhandler.SetUpModifiers();
 }
 
 function ModifierSave(){
     let difficulty = document.querySelector("#difficulty-select");
-    modifierhandler.modifiers = {difficulty: difficulty.value}
-    ModifierDivSetup(modifierhandler.modifiers);
+    GAME.modifierhandler.modifiers = {difficulty: difficulty.value}
+    ModifierDivSetup(GAME.modifierhandler.modifiers);
     ModifierExit();
 }
 
@@ -112,11 +124,10 @@ function DifficultyDesc(){
 function TestSetBPM(){
     if (TESTINGMODE) {
     const INPUT = document.getElementById('BPMinput');
-    bpm = Number.isNaN(Number(INPUT.value)) ? 120 : Number(INPUT.value); 
-    console.log(bpm);
-    clearInterval(Interval);
-    Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
-    inputhandler.ChangeDelay(bpm);
+    GAME.bpm = Number.isNaN(Number(INPUT.value)) ? 120 : Number(INPUT.value); 
+    clearInterval(GAME.Interval);
+    GAME.Interval = setInterval(GAME.bpmtick, ((60/GAME.bpm) / 2)*1000);
+    GAME.inputhandler.ChangeDelay(GAME.bpm);
     }
     else {
         console.log("hey! you're gonna break my heart!");
@@ -126,8 +137,8 @@ function TestSetBPM(){
 function TestAttack(){
     if (TESTINGMODE){
     const INPUT = document.getElementById('attackinput');
-    attacker.tick = 0;
-    attacker.load(Number(INPUT.value), true);
+    GAME.attacker.tick = 0;
+    GAME.attacker.load(Number(INPUT.value), true);
     }
     else {
         console.log("hey! you're gonna break my heart!");
@@ -136,20 +147,20 @@ function TestAttack(){
 
 function TestVariant(method){
     if (method == "mix"){
-        mixer.pickedvariant = document.getElementById(`variantpicker`).value;
-        mixer.variantapplier();
+        GAME.mixer.pickedvariant = document.getElementById(`variantpicker`).value;
+        GAME.mixer.variantapplier();
     }
     else if (method == "unmix"){
-        variant = `none`;
-        mixer.reset();
+        GAME.variant = `none`;
+        GAME.mixer.reset();
     }
     else if (method == "card"){
-        isinterlude = !isinterlude;
-        mixer.mixuptime = !mixer.mixuptime;
-        mixer.mixuptext = !mixer.mixuptext;
-        if (isinterlude) {
-            mixer.pickedvariant = document.getElementById(`variantpicker`).value;
-            mixer.playmixupaudio();
+        GAME.isInterlude = !GAME.isInterlude;
+        GAME.mixer.mixuptime = !GAME.mixer.mixuptime;
+        GAME.mixer.mixuptext = !GAME.mixer.mixuptext;
+        if (GAME.isInterlude) {
+            GAME.mixer.pickedvariant = document.getElementById(`variantpicker`).value;
+            GAME.mixer.playmixupaudio();
         }
     }
 }

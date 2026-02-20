@@ -1,218 +1,364 @@
-if (TESTINGMODE){
-    Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
-}
-
-function increasetempo(){
-    artful.PulseActive = true;
-    bpm += BPMchange();
-    clearInterval(Interval);
-    Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
-    inputhandler.ChangeDelay(bpm);
-    if (attacknum != 1){var bgm = `main${Randint(BGMCOUNT)+1}`}
-    else {bgm = `main1`}
-    soundspeed = bpm/BASEBPM;
-    audiohandler.volumecontrol();
-    audiohandler.play(bgm, "bgm");
-}
-
-function Randint(max) {
-  let output = Math.floor(Math.random() * max);
-  if (output == max){
-    return output - 1;
-  }
-  else{
-    return output;
-  }
-}
-
-function BPMchange(){
-    if (variant == "doubletime") return modifierhandler.bpmchange * 2;
-    else if (variant == "replay") return 0;
-    else return modifierhandler.bpmchange;
-}
-
-function bpmtick() {
-    document.dispatchEvent(tick);
-    beat += 1;
-    if (startup == 4){
-        start();
-        startup = 5;
+class GameHandler {
+    constructor() {
+        this.playerPos = [5, 5];
+        this.bpm = 120;
+        this.startingHP = 5;
+        this.hp = 0;
+        this.Dangers = [];
+        this.Interval = TESTINGMODE ? setInterval(this.BPMtick, ((60/this.bpm) / 2)*1000) : null;
+        this.artful = null;
+        document.addEventListener("DOMContentLoaded", () => {
+            this.SCREEN = document.getElementById("Canvas");
+            this.SCREEN.width = this.SCREEN.clientWidth;
+            this.SCREEN.height = this.SCREEN.clientHeight;
+            this.CTX = this.SCREEN.getContext("2d");
+            this.createSubsystems();
+        }, {once: true});
+        this.INCREMENT = 600 / 9;
+        this.variant = "none";
+        this.isHurt = false;
+        this.isInterlude = false;
+        this.hurtCooldown = 0;
+        this.currentBeat = 0;
+        this.startUp = TESTINGMODE ? 5 : 0;
+        this.transitionTime = false;
+        this.transition = 0;
+        this.healed = 0;
+        this.screenState = TESTINGMODE ? "game" : "loading";
+        this.startHP = 5;
+        this.tickFrequency = 1;
+        this.beat = 0;
+        this.loadedSounds = 0;
     }
-    if (startup < 4 && beat % 2 != 0){startup += 1}
-}
 
-function DrawMe(inc){
-    let posx = GLOBAL_OFFSET + (PlayerPos[0] * inc - (inc / 2));
-    let posy = GLOBAL_OFFSET + (PlayerPos[1] * inc - (inc / 2));
-    let color, stroke;
-    stroke = `rgba(137,137,137,${playeropac})`;
-    if (!mixer.visible){stroke = "rgba(0,0,0,0)"}
-    if (variant == "inverted"){color =  `rgba(174, 255, 0, ${playeropac})`;} //inverted
-    else if (variant == "disco"){color =  `rgba(${255 - (63.75 * mixer.lastmoved)}, ${255 - (63.75 * mixer.lastmoved)}, 0, ${playeropac})`;} //makes it fade out to show you that you need to MOVE
-    else if (variant == "pulse"){
-        if (mixer.visible){color =  `rgba(255, 255, 0, ${playeropac})`}
-        else{color =  `rgba(255, 255, 0, 0)`}
+    createSubsystems() {
+        this.mixer = new Mixer(this);
+        this.audiohandler = new AudioHandler(this);
+        this.attacker = new AttackLoader(this);
+        this.inputhandler = new InputHandler(this);
+        this.modifierhandler = new ModifierHandler(this);
+        this.artful = new Artful(this, this.CTX, this.INCREMENT);
+        this.fps = setInterval(() => this.mainloop(), FPS_IN_MS); //load all systems, and then establish the loop!
+        if (TESTINGMODE) {
+            initalizeAdminPanel();
+        }
     }
-    else{color =  `rgba(255, 255, 0, ${playeropac})`;}
-    artful.DrawCircle(posx,posy,mixer.scale,color,stroke);
-    DrawMeFace(posx, posy);
-}
 
-function DrawMeFace(posx, posy){
-    let color;
-    let ox = 0;
-    let oy = 0;
-    if (variant == "disco"){
-        color =  `rgba(${0 + (63.75 * mixer.lastmoved)}, ${0 + (63.75 * mixer.lastmoved)}, ${0 + (63.75 * mixer.lastmoved)}, 1)`;
-        ox = (2 - Math.random() * 4)*mixer.scale;
-        oy = (2 - Math.random() * 4)*mixer.scale;
+    increaseTempo() {
+        this.artful.PulseActive = true;
+        this.bpm += this.BPMchange();
+        clearInterval(this.Interval);
+        this.Interval = setInterval(() => this.BPMtick(), ((60 / this.bpm) / 2) * 1000);
+        this.inputhandler.ChangeDelay(this.bpm);
+        let bgm = this.attacker.attackNum != 1 ? `main${Randint(BGMCOUNT) + 1}` : `main1`;
+        this.audiohandler.soundSpeed = this.bpm / BASEBPM;
+        this.audiohandler.volumecontrol();
+        this.audiohandler.play(bgm, "bgm");
     }
-    else if (variant == "doubledamage"){
-        color = `rgba(0, 0, 0, ${playeropac})`;
-        ox = mixer.eyemovement;
+
+    BPMchange() {
+        if (this.variant == "doubletime") return this.modifierhandler.bpmchange * 2;
+        else if (this.variant == "replay") return 0;
+        else return this.modifierhandler.bpmchange;
     }
-    else if (variant == "glassbones"){
-        color = `rgba(0, 0, 0, ${playeropac})`;
-        ox = (2 - Math.random() * 4)*mixer.scale;
+
+    BPMtick() {
+        document.dispatchEvent(tick);
+        this.beat += 1;
+        if (this.startUp == 4) {
+            this.start();
+            this.startUp = 5;
+        }
+        if (this.startUp < 4 && this.beat % 2 != 0) {
+            this.startUp += 1;
+        }
     }
-    else{
-        if (looking[0] == "x"){ox = looking[1]*mixer.scale}
-        else{oy = looking[1]*mixer.scale}
-       color = `rgba(0, 0, 0, ${playeropac})`;
+
+    drawPlayer(inc) {
+        let posx = GLOBAL_OFFSET + (this.playerPos[0] * inc - (inc / 2));
+        let posy = GLOBAL_OFFSET + (this.playerPos[1] * inc - (inc / 2));
+        let color, stroke;
+        stroke = `rgba(137,137,137,${this.artful.playerOpac})`;
+        if (!this.mixer.visible) { stroke = "rgba(0,0,0,0)"; }
+        if (this.variant == "inverted") {
+            color = `rgba(174, 255, 0, ${this.artful.playerOpac})`;
+        } else if (this.variant == "disco") {
+            color = `rgba(${255 - (63.75 * this.mixer.lastmoved)}, ${255 - (63.75 * this.mixer.lastmoved)}, 0, ${this.artful.playerOpac})`;
+        } else if (this.variant == "pulse") {
+            color = this.mixer.visible ? `rgba(255, 255, 0, ${this.artful.playerOpac})` : `rgba(255, 255, 0, 0)`;
+        } else {
+            color = `rgba(255, 255, 0, ${this.artful.playerOpac})`;
+        }
+        this.artful.DrawCircle(posx, posy, this.mixer.scale, color, stroke);
+        this.drawPlayerFace(posx, posy);
     }
-    switch (true){
-        case (ishurt):
-            artful.DrawMyEyes(posx,posy,"x",16*mixer.scale,"Verdana",color,(7.5*mixer.scale),ox,(5*mixer.scale),oy,"bold");
-            artful.DrawMyMouth(posx,posy,")",28,"Arial",color,-5,7.5,270);
-            break;
-        case (variant == "disco"):
-            artful.DrawMyEyes(posx,posy,"o",16*mixer.scale,"Fira Sans",color,(7.5*mixer.scale),ox,(5*mixer.scale),oy);
-            artful.DrawMyMouth(posx,posy,"<",20,"Verdana",color,-5,6.5,270);
-            break;
-        case (variant == "doubledamage"):
-            artful.DrawMyEyes(posx,posy,".",56*mixer.scale,"Fira Sans",color,(7.5*mixer.scale),ox,(5*mixer.scale),oy);
-            artful.DrawMyMouth(posx,posy,"-",20,"Arial",color,0,6,180);
-            break;
-        case (variant == "glassbones"):
-            artful.DrawMyEyes(posx,posy,"o",20*mixer.scale,"Fira Sans",color,(7.5*mixer.scale),ox,(5*mixer.scale),oy);
-            artful.DrawMyMouth(posx + ox,posy,"~",44,"Courier",color,0,20,0);
-            break;
-        case (attacker.pattern.length == 17):
-            artful.DrawMyEyes(posx,posy,"^",16*mixer.scale,"Verdana",color,(7.5*mixer.scale),ox,(1*mixer.scale),oy,"bold");
-            if (attacker.clbrt == 1){
-                artful.DrawMyMouth(posx,posy,"o",20,"Verdana",color,0,6.5,0);
+
+    drawPlayerFace(posx, posy) {
+        const scale = this.mixer.scale;
+        let color = `rgba(0,0,0,${this.artful.playerOpac})`;
+        let ox = 0;
+        let oy = 0;
+
+        if (this.variant == "disco") {
+            const opacity = 63.75 * this.mixer.lastmoved;
+            color = `rgba(${opacity}, ${opacity}, ${opacity}, 1)`;
+            ox = (Math.random() * 4 - 2) * scale;
+            oy = (Math.random() * 4 - 2) * scale;
+        } else if (this.variant == "doubledamage") {
+            ox = this.mixer.eyemovement;
+        } else if (this.variant == "glassbones") {
+            ox = (Math.random() * 4 - 2) * scale;
+        } else {
+            if (this.artful.eyeOffset[0] == "x") ox = this.artful.eyeOffset[1] * scale;
+            else oy = this.artful.eyeOffset[1] * scale;
+        }
+
+        switch (true) {
+            case this.isHurt:
+                this.artful.DrawMyEyes(posx, posy, "x", 16 * scale, "Verdana", color, 7.5 * scale, ox, 5 * scale, oy, "bold");
+                this.artful.DrawMyMouth(posx, posy, ")", 28, "Arial", color, -5, 7.5, 270);
+                break;
+            case this.variant == "disco":
+                this.artful.DrawMyEyes(posx, posy, "o", 16 * scale, "Fira Sans", color, 7.5 * scale, ox, 5 * scale, oy);
+                this.artful.DrawMyMouth(posx, posy, "<", 20, "Verdana", color, -5, 6.5, 270);
+                break;
+            case this.variant == "doubledamage":
+                this.artful.DrawMyEyes(posx, posy, ".", 56 * scale, "Fira Sans", color, 7.5 * scale, ox, 5 * scale, oy);
+                this.artful.DrawMyMouth(posx, posy, "-", 20, "Arial", color, 0, 6, 180);
+                break;
+            case this.variant == "glassbones":
+                this.artful.DrawMyEyes(posx, posy, "o", 20 * scale, "Fira Sans", color, 7.5 * scale, ox, 5 * scale, oy);
+                this.artful.DrawMyMouth(posx + ox, posy, "~", 44, "Courier", color, 0, 20, 0);
+                break;
+            case this.attacker.pattern.length == 17:
+                this.artful.DrawMyEyes(posx, posy, "^", 16 * scale, "Verdana", color, 7.5 * scale, ox, 1 * scale, oy, "bold");
+                this.artful.DrawMyMouth(posx, posy, this.attacker.clbrt == 1 ? "o" : "-", 20, "Verdana", color, 0, 6.5, 0);
+                break;
+            default:
+                this.artful.DrawMyEyes(posx, posy, ".", 56 * scale, "Fira Sans", color, 7.5 * scale, ox, 5 * scale, oy);
+                this.artful.DrawMyMouth(posx, posy, ")", 28 * scale, "Arial", color, 5 * scale, 7.5 * scale, 90);
+                break;
+        }
+    }
+
+    drawHazards(inc) {
+        this.Dangers.forEach(item => item.draw(inc));
+        this.artful.MoverStorage = [];
+    }
+
+    mainloop() {
+        this.gameLoop();
+        this.renderFrame();
+    }
+
+    gameLoop() {
+        if (this.screenState == "loading") {
+            if (this.loadedSounds / SOUNDCOUNT == 1) { this.screenState = "warning"; }
+        }
+        if (this.screenState == "menu") {
+            if (this.inputhandler.clickGrace != 0) { this.inputhandler.clickGrace -= 1; }
+            if (this.transitionTime && this.transition != 100) {
+                this.transition += 1;
+                this.audiohandler.musicFade += 1;
+                this.audiohandler.volumecontrol();
             }
-            else {
-                artful.DrawMyMouth(posx,posy,"-",20,"Verdana",color,0,6.5,0);
+            if (this.transition == 100) { this.gtransitionstart(); }
+            this.artful.textAnimFrames += 1;
+            if (this.artful.textAnimFrames == 30) { this.textFace *= -1; this.artful.textAnimFrames = 0; }
+        }
+        if (this.screenState == "gameover") {
+            if (this.startUp == 270) { this.audiohandler.play("titletheme", "bgm"); }
+            if (this.startUp % 90 == 0) { this.audiohandler.play("reveal", "sfx"); }
+            if (this.startUp != 271) { this.startUp += 1; }
+            this.artful.textAnimFrames += 1;
+            if (this.artful.textAnimFrames == 30) { this.textFace *= -1; this.artful.textAnimFrames = 0; }
+        }
+        if (this.screenState == "game") {
+            if (this.isHurt) {
+                this.hurtCooldown -= 1;
+                if (this.hurtCooldown == 0) { this.isHurt = false; this.artful.playerOpac = 1; }
             }
-            break;
-        default:
-            artful.DrawMyEyes(posx,posy,".",56*mixer.scale,"Fira Sans",color,(7.5*mixer.scale),ox,(5*mixer.scale),oy);
-            artful.DrawMyMouth(posx,posy,")",28*mixer.scale,"Arial",color,5*mixer.scale,7.5*mixer.scale,90);
-            break;
+            if (this.healed != 0) { this.healed -= 1; }
+            if (this.artful.eyeOffset[1] != 0) {
+                this.artful.eyeOffsetFrames -= 1;
+                if (this.artful.eyeOffsetFrames == 0) { this.artful.eyeOffset = [0, 0]; }
+            }
+            this.hitReg();
+            document.dispatchEvent(RefreshOnFrame);
+        }
+    }
+
+    renderFrame() {
+        this.CTX.clearRect(0, 0, this.SCREEN.width, this.SCREEN.height);
+        this.artful.DrawFrame();
+        if (this.screenState == "warning") {
+            this.artful.DrawText("WARNING", {size: 64, font: "Arial"}, "rgba(255, 0, 0, 1)", GLOBAL_OFFSET, 100, true);
+            this.artful.DrawText('This "game" contains flashing lights. Do not proceed if', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 200, true);
+            this.artful.DrawText('you are sensitive to flashing lights or suffer from', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 230, true);
+            this.artful.DrawText('photosensitive epilepsy.', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 260, true);
+            this.artful.DrawText('click anywhere to continue.', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 600, true);
+        }
+        if (this.screenState == "loading") {
+            this.artful.DrawText("Loading...", {size: 64, font: "Comic Sans MS"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 350, true);
+            this.artful.DrawText(`${this.loadedSounds}/${SOUNDCOUNT}`, {size: 36, font: "Comic Sans MS"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 500, true);
+        }
+        if (this.screenState == "menu") {
+            this.artful.DrawImage(this.textFace == 1 ? TITLE1 : TITLE2, 40, -230);
+            this.artful.DrawImage(this.textFace == 1 ? PLAY1 : PLAY2, 40, 0);
+            this.artful.DrawImage(this.textFace == 1 ? MOD1 : MOD2, 40, 130);
+            this.artful.DrawText("volume (use +/- keys to control)", {size: 24, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 550, true);
+            this.artful.DrawText(globalvol * 10, {size: 36, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 600, true);
+            this.CTX.fillStyle = `rgba(0, 0, 0, ${this.transition / 100})`;
+            this.CTX.fillRect(GLOBAL_OFFSET, GLOBAL_OFFSET, this.INCREMENT * 9, this.INCREMENT * 9);
+        }
+        if (this.screenState == "gameover") {
+            this.artful.DrawImage(this.textFace == 1 ? GAMEOVER1 : GAMEOVER2, 20, -230);
+            if (this.startUp >= 90)  { this.artful.DrawText("Score:", {size: 48, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 300, true); }
+            if (this.startUp >= 180) { this.artful.DrawText(this.attacker.attackNum - 1, {size: 72, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 400, true); }
+            if (this.startUp >= 270) { this.artful.DrawText("back to menu", {size: 36, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 550, true); }
+        }
+        if (this.screenState == "punishment") {
+            this.artful.DrawText("RIP old punishment screen :(", {size: 36, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 350, true);
+        }
+        if (this.screenState == "game") {
+            this.drawHazards(this.INCREMENT);
+            this.artful.DrawGrid(this.startUp);
+            if (this.startUp >= 4) { this.drawPlayer(this.INCREMENT); }
+            this.mixer.drawspeedup();
+            this.artful.PulseEffect();
+        }
+    }
+
+    hitReg() {
+        let checkhere = [];
+        let collecthere = [];
+        this.Dangers.sort((a, b) => a.z - b.z);
+        this.Dangers.forEach(item => {
+            let widthfactor = item.size;
+            if (!item.active) return;
+            switch (true) {
+                case item instanceof DSweeper:
+                    if (item.direction == "vertical") {
+                        for (let w = 0; w < widthfactor; w++)
+                            for (let i = 1; i < 10; i++)
+                                checkhere.push([item.pos + w, i]);
+                    } else {
+                        for (let w = 0; w < widthfactor; w++)
+                            for (let i = 1; i < 10; i++)
+                                checkhere.push([i, item.pos + w]);
+                    }
+                    break;
+                case checkcollect(item):
+                    collecthere.push([item.x, item.y]);
+                    break;
+                case item instanceof DSticker:
+                    if (item.size != 1) {
+                        for (let x = 0; x < item.size; x++)
+                            for (let y = 0; y < item.size; y++)
+                                checkhere.push([item.x + x, item.y + y]);
+                    } else { checkhere.push([item.x, item.y]); }
+                    break;
+                default:
+                    checkhere.push([item.x, item.y]);
+                    break;
+            }
+        });
+        if (checkhere.some(itm => EqCheck(itm, this.playerPos))) { this.hurt(); }
+        if (collecthere.some(itm => EqCheck(itm, this.playerPos))) {
+            this.Dangers.forEach(item => {
+                if (item.x == this.playerPos[0] && item.y == this.playerPos[1]) { item.safe(); }
+            });
+        }
+    }
+
+    killMe(object) {
+        document.removeEventListener('tick', object.behavior);
+        if (object instanceof IConfetti) { document.removeEventListener('refreshframe', object.behavior); }
+        let victim = this.Dangers.indexOf(object);
+        this.Dangers.splice(victim, 1);
+    }
+
+    gameOver() {
+        clearInterval(this.Interval);
+        UpNextHandler();
+        this.audiohandler.stopBGM();
+        this.hurtCooldown = 0;
+        this.isHurt = false;
+        this.audiohandler.silence = 1;
+        this.bpm = 120;
+        this.audiohandler.soundSpeed = this.bpm / BASEBPM;
+        for (let i = this.Dangers.length - 1; i >= 0; i--) { this.killMe(this.Dangers[i]); }
+        this.startUp = 0;
+        this.screenState = "gameover";
+    }
+
+    hurt() {
+        if (this.isHurt) return;
+        this.audiohandler.play("hurt", "sfx");
+        this.isHurt = true;
+        this.hurtCooldown = 180;
+        this.artful.playerOpac = 0.6;
+        if (this.variant == "doubledamage") {
+            RemoveHeart();
+            RemoveHeart();
+            this.hp -= 2;
+        } else if (this.variant == "glassbones") {
+            for (let i = this.hp; i > 0; i--) { RemoveHeart(); }
+            this.hp = 0;
+        } else {
+            RemoveHeart();
+            this.hp -= 1;
+        }
+        if (this.hp <= 0) { this.gameOver(); }
+    }
+
+    hpUp() {
+        if (this.hp != 10) {
+            this.hp += 1;
+            CreateHeart();
+        }
+    }
+
+    start() {
+        this.hp = 0;
+        this.transitionTime = false;
+        this.transition = 0;
+        this.bpm -= this.modifierhandler.bpmchange;
+        this.increaseTempo();
+        for (let i = 1; i <= this.startHP; i++) { this.hpUp(); }
+        this.screenState = "game";
+        this.attacker.load(Randint(ATTACK_COUNT) + 1);
+        this.artful.PulseActive = true;
+    }
+
+    gtransitionstart() {
+        this.musicFade = 0;
+        this.attacker.tick = 0;
+        this.attacker.pattern = 0;
+        this.playerPos = [5, 5];
+        this.beat = 0;
+        this.tickFrequency = 1;
+        this.startUp = 0;
+        this.startHP = 5;
+        this.attacker.attackNum = 1;
+        this.attacker.randplus = 0;
+        this.attacker.randmax = 9;
+        this.artful.playerOpac = 1;
+        this.variant = "none";
+        this.audiohandler.stopBGM();
+        this.bpm = 120;
+        this.screenState = "game";
+        this.audiohandler.volumecontrol();
+        this.audiohandler.play("countin", "bgm");
+        this.Interval = setInterval(() => this.BPMtick(), ((60 / this.bpm) / 2) * 1000);
+        this.inputhandler.ChangeDelay(this.bpm);
     }
 }
 
-function DrawHazards(inc){ //draw objects that hurt
-    Dangers.forEach(function(item){
-        item.draw(inc);
-    })
-    artful.MoverStorage = [];}
 
-function mainloop() { //draw everything
-    if (!SCREEN){
-        SCREEN = document.getElementById("Canvas");
-        SCREEN.width = SCREEN.clientWidth;
-        SCREEN.height = SCREEN.clientHeight;
-        INCREMENT = 600 / 9;
-        CTX = SCREEN.getContext("2d");;
-        artful = new Artful(CTX, INCREMENT);
-    }
-    CTX.clearRect(0, 0, SCREEN.width, SCREEN.height);
-    let x = 0;
-    artful.DrawFrame();
-    if (screenstate == "warning"){
-        artful.DrawText("WARNING",{size:64, font:"Arial"},"rgba(255, 0, 0, 1)",GLOBAL_OFFSET,100,true);
-        artful.DrawText('This "game" contains flashing lights. Do not proceed if',{size:24, font:"Arial"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,200,true);
-        artful.DrawText('you are sensitive to flashing lights or suffer from',{size:24, font:"Arial"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,230,true);
-        artful.DrawText('photosensitive epilepsy.',{size:24, font:"Arial"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,260,true);
-        artful.DrawText('click anywhere to continue.',{size:24, font:"Arial"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,600,true);
-    }
-    if (screenstate == "loading"){
-        artful.DrawText("Loading...",{size:64, font:"Comic Sans MS"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,350,true);
-        artful.DrawText(`${loadedsounds}/${SOUNDCOUNT}`,{size:36, font:"Comic Sans MS"},"rgba(255, 255, 255, 1)",GLOBAL_OFFSET,500,true);
-        if (loadedsounds/SOUNDCOUNT == 1){
-            screenstate = "warning";
-        }
-    }
-    if (screenstate == "menu"){
-        if (clickgrace != 0){clickgrace -= 1}
-        if (transitiontime && transition != 100){
-            transition += 1;
-            musicfade += 1;
-            audiohandler.volumecontrol();
-        }
-        if (transition == 100){
-            gtransitionstart();
-        }
-        artful.DrawImage(textanim == 1 ? TITLE1 : TITLE2, 40, -230);
-        artful.DrawImage(textanim == 1 ? PLAY1 : PLAY2, 40, 0);
-        artful.DrawImage(textanim == 1 ? MOD1 : MOD2, 40, 130);
-        artful.DrawText("volume (use +/- keys to control)",{size:24, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,550,true);
-        artful.DrawText(globalvol*10,{size:36, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,600,true)
-        CTX.fillStyle = `rgba(0, 0, 0, ${transition/100})`;
-        CTX.fillRect(GLOBAL_OFFSET,GLOBAL_OFFSET,INCREMENT*9,INCREMENT*9);
-        textanimtick += 1;
-        if (textanimtick == 30){
-            textanim *= -1;
-            textanimtick = 0;
-        }
-    }
-    if (screenstate == "gameover"){
-        artful.DrawImage(textanim == 1 ? GAMEOVER1 : GAMEOVER2, 20, -230);
-        if (startup >= 90){artful.DrawText("Score:",{size:48, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,300,true)}
-        if (startup >= 180){artful.DrawText(attacknum-1,{size:72, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,400,true)}
-        if (startup >= 270){
-            artful.DrawText("back to menu",{size:36, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,550,true);
-        }
-        if (startup == 270){audiohandler.play("titletheme", "bgm")}
-        if (startup % 90 == 0){audiohandler.play("reveal", "sfx")}
-        if (startup != 271){startup += 1}
-        textanimtick += 1;
-        if (textanimtick == 30){
-            textanim *= -1;
-            textanimtick = 0;
-        }
-    }
-    if (screenstate == "punishment"){artful.DrawText("RIP old punishment screen :(",{size: 36, font:"Comic Sans MS"},"rgb(255,255,255)",GLOBAL_OFFSET,350, true)}
-    if (screenstate == "game"){
-        DrawHazards(INCREMENT);
-        artful.DrawGrid(startup);
-        if (startup >= 4){DrawMe(INCREMENT)}
-        if (ishurt){
-            hurtcd -= 1;
-            if (hurtcd == 0){
-                ishurt = false;
-                playeropac = 1;
-            }
-        }
-        if (healed != 0){
-            healed -= 1;
-        }
-        if (looking[1] != 0){ //for little eye movements
-            timelooking -= 1;
-            if (timelooking == 0){looking = [0,0]}
-        }
-        mixer.drawspeedup();
-        HitReg();
-        document.dispatchEvent(RefreshOnFrame);
-        artful.PulseEffect();  
-    }
-}
-
-//Mixups section
-class Mixer{ //its for the mixups
-    constructor(){
+class Mixer {
+    constructor(game) {
+        this.game = game;
         this.lastmoved = 0;
         this.tick = 0;
         this.visible = true;
@@ -221,230 +367,196 @@ class Mixer{ //its for the mixups
         this.scale = 1;
         this.behavior = this.behavior.bind(this);
         this.swoop = 0;
-        this.variantchance = 6; //one in X
+        this.variantchance = 6;
         this.eyemovement = 0;
         this.pickedvariant = "none";
         this.variants = {
             shadowme: {
                 name: "Shadow Clone",
-                description: "it trails behind you!"
+                description: "it trails behind you!",
+                sfxname: "shadow",
+                playbackRate: 2
             },
             big: {
                 name: "BIG",
-                description: "same hitbox tho!"
+                description: "same hitbox tho!",
+                sfxname: "big"
             },
             inverted: {
                 name: "Inverted",
-                description: "its SDWA now!"
+                description: "its SDWA now!",
+                sfxname: "invert",
+                startpos: 2
             },
             disco: {
                 name: "Sugar Rush",
-                description: "dont stop moving!"
+                description: "dont stop moving!",
+                sfxname: "yummy"
             },
             pulse: {
                 name: "Phantom",
-                description: "blink and you'll miss it!"
+                description: "blink and you'll miss it!",
+                sfxname: "ghost",
+                startpos: 1,
+                playbackRate: 2
             },
             silent: {
                 name: "Silent",
-                description: "shhhhh!"
+                description: "shhhhh!",
+                sfxname: "ghost",
+                playbackRate: 2,
+                vol: 0
             },
             healthup: {
                 name: "Health Up",
-                description: "well aren't you a lucky one!"
+                description: "well aren't you a lucky one!",
+                sfxname: "yummy"
             },
             strikes: {
                 name: "Side Strikes",
-                description: "more stuff to dodge!"
+                description: "more stuff to dodge!",
+                sfxname: "shadow",
+                playbackRate: 2
             },
             glassbones: {
                 name: "Glass Bones",
-                description: "Good Luck..."
+                description: "Good Luck...",
+                sfxname: "oneshot"
             },
             doubledamage: {
                 name: "Double Damage",
                 description: "double the owie!",
-                fontsize: 44
+                fontsize: 44,
+                sfxname: "bruh"
             },
             doubletime: {
                 name: "Double Time",
-                description: "lets go a bit faster!"
+                description: "lets go a bit faster!",
+                sfxname: "speedier",
+                playbackRate: 2
             },
             replay: {
                 name: "Replay",
-                description: "i liked that lets do it again"
+                description: "i liked that lets do it again",
+                sfxname: "replay",
+                startpos: 2,
+                playbackRate: 2
             }
-            };
-        this.varkeys = Object.keys(this.variants)
+        };
+        this.varkeys = Object.keys(this.variants);
         document.addEventListener('tick', this.behavior);
     }
 
-    behavior(){
-        if (variant == "disco"){ //you basically have to keep moving
+    behavior() {
+        const game = this.game;
+        if (game.variant == "disco") {
             this.lastmoved += 1;
-            if (this.lastmoved >= 5){
-                hurt();
-            }
+            if (this.lastmoved >= 5) { game.hurt(); }
         }
-        if (variant == "strikes"){
+        if (game.variant == "strikes") {
             this.tick += 1;
-            if (this.tick >= 6){
-                Dangers.push(new DSweeper(Randint(9)+1,"horizontal",2,1));
+            if (this.tick >= 6) {
+                game.Dangers.push(new DSweeper(Randint(9) + 1, "horizontal", 2, 1));
                 this.tick = -2;
             }
         }
-        if (variant == "pulse"){
+        if (game.variant == "pulse") {
             this.visible = false;
             this.tick += 1;
-            if (this.tick >= 4){
-                this.visible = true;
-                this.tick = 0;
-            }
+            if (this.tick >= 4) { this.visible = true; this.tick = 0; }
         }
-        if (variant == "doubledamage"){
-            if (this.eyemovement == 0){
-                const eyemovementchance = Randint(15)
-                if (eyemovementchance == 14) this.eyemovement = 4;
-            }
-            else {
+        if (game.variant == "doubledamage") {
+            if (this.eyemovement == 0) {
+                if (Randint(15) == 14) this.eyemovement = 4;
+            } else {
                 this.tick += 1;
-                if (this.tick > 4) {
-                    this.eyemovement = 0;
-                    this.tick = 0;
-                }
+                if (this.tick > 4) { this.eyemovement = 0; this.tick = 0; }
                 else if (this.tick < 2) this.eyemovement = 4;
                 else this.eyemovement = -4;
             }
         }
-        if (variant == "big"){
-            this.scale = 3.5;
-        }
+        if (game.variant == "big") { this.scale = 3.5; }
     }
 
-    resetdisco(){ //resets disco counter
+    resetdisco() {
         this.lastmoved = 0;
     }
 
-    callshadow(){
-        Dangers.forEach((item) => {
-            if (item instanceof ShadowMe){item.behavior()}})
-        }
+    callshadow() {
+        this.game.Dangers.forEach(item => {
+            if (item instanceof ShadowMe) { item.behavior(); }
+        });
+    }
 
-    reset(){
-        Dangers.forEach((item) => {
-            if (item instanceof ShadowMe){killme(item)}})
-        silence = 1;
+    reset() {
+        const game = this.game;
+        game.Dangers.forEach(item => {
+            if (item instanceof ShadowMe) { game.killMe(item); }
+        });
+        game.silence = 1;
         this.scale = 1;
         this.lastmoved = 0;
         this.visible = true;
         this.tick = 0;
-        
     }
 
-
-    variantpicker(){  
-        let IsVariantNow = (Randint(this.variantchance)+1 == this.variantchance);
-        if (IsVariantNow){
-            this.pickedvariant = this.varkeys[Randint(this.varkeys.length)]
-        }
-        else{this.pickedvariant = "none"}
-    }
-    
-    variantapplier(){
-        this.reset(); 
-        variant = this.pickedvariant;
-        if (variant == "shadowme"){Dangers.push(new ShadowMe(PlayerPos[0], PlayerPos[1]))}
-        if (variant == "silent"){
-            silence = 0;
-        }
-        if (variant == "healthup"){
-            hpup();
+    variantpicker() {
+        if (Randint(this.variantchance) + 1 == this.variantchance) {
+            this.pickedvariant = this.varkeys[Randint(this.varkeys.length)];
+        } else {
+            this.pickedvariant = "none";
         }
     }
 
-    drawspeedup(){
-        if (isinterlude){
-            if (this.swoop != 30){this.swoop += 1}
+    variantapplier() {
+        const game = this.game;
+        this.reset();
+        game.variant = this.pickedvariant;
+        if (game.variant == "shadowme") { game.Dangers.push(new ShadowMe(game.playerPos[0], game.playerPos[1])); }
+        if (game.variant == "silent") { game.silence = 0; }
+        if (game.variant == "healthup") { game.hpUp(); }
+    }
+
+    drawspeedup() {
+        const game = this.game;
+        if (game.isInterlude) {
+            if (this.swoop != 30) { this.swoop += 1; }
+        } else {
+            if (this.swoop != 0) { this.swoop -= 1; }
         }
-        else{
-            if (this.swoop != 0){this.swoop -= 1}
-        }
-        if (this.swoop != 0 || isinterlude){
-        let x = -1000 + (Math.floor(38.33 * this.swoop+0.15));
-        artful.DrawInterlude((this.mixuptext ? "Mix Up!" : "Speed Up!"),x);
-        if (this.mixuptime){this.drawmixup()}
+        if (this.swoop != 0 || game.isInterlude) {
+            let x = -1000 + (Math.floor(38.33 * this.swoop + 0.15));
+            game.artful.DrawInterlude((this.mixuptext ? "Mix Up!" : "Speed Up!"), x);
+            if (this.mixuptime) { this.drawmixup(); }
         }
     }
 
-    drawmixup(){
-        let x = -1000 + (Math.floor(38.33 * this.swoop+0.15));
-        artful.DrawMixedUp(this.variants[this.pickedvariant], x)
+    drawmixup() {
+        let x = -1000 + (Math.floor(38.33 * this.swoop + 0.15));
+        this.game.artful.DrawMixedUp(this.variants[this.pickedvariant], x);
     }
 
-    playmixupaudio(){
-        let input = "";
-        let startpos = 0;
-        let PlaybackRate = 1;
-        let vol = 1;
-        switch (this.pickedvariant){
-            case "shadowme":
-                input = "shadow";
-                PlaybackRate = 2;
-                break;
-            case "big":
-                input = "big";
-                break;
-            case "inverted":
-                input = "invert"
-                startpos = 2;
-                break;
-            case "disco":
-                input = "yummy";
-                break;
-            case "pulse":
-                input = "ghost";
-                startpos = 1;
-                PlaybackRate = 2;
-                break;
-            case "silent":
-                input = "ghost";
-                PlaybackRate = 2;
-                vol = 0;
-                break;
-            case "healthup":
-                input = "yummy";
-                break;
-            case "strikes":
-                input = "shadow";
-                PlaybackRate = 2;
-                break;
-            case "doubletime":
-                input = "speedier";
-                PlaybackRate = 2;
-                break;
-            case "doubledamage":
-                input = "bruh";
-                break;
-            case "glassbones":
-                input = "oneshot";
-                break;
-            case "replay":
-                input = "replay";
-                startpos = 2;
-                PlaybackRate = 2;
-                break;
-        }
+    playmixupaudio() {
+        const game = this.game;
+        let variantData = this.variants[this.pickedvariant];
+        let input = variantData.sfxname;
+        let startpos = variantData.startpos ?? 0;
+        let PlaybackRate = variantData.playbackRate ?? 1;
+        let vol = variantData.vol ?? 1;
         let sound = new Audio(`./sound/sfx/${input}.mp3`);
+
         sound.currentTime = startpos;
-        sound.playbackRate = PlaybackRate * soundspeed;
-        sound.volume = vol - (1-globalvol);
+        sound.playbackRate = PlaybackRate * game.audiohandler.soundSpeed;
+        sound.volume = vol - (1 - globalvol);
         sound.play();
     }
 }
 
 class ModifierHandler{
-    constructor(){
+    constructor(game){
+        this.game = game;
         this.bpmchange = 5;
+        this.modifierTabOpen = false;
         this.modifiers = {
             difficulty: "Normal"
         }
@@ -473,175 +585,24 @@ class ModifierHandler{
     }
 }
 
-Dangers = []; //array containing all active hazards
-function killme(object){
-    document.removeEventListener('tick', object.behavior);
-    if (object instanceof IConfetti) document.removeEventListener('refreshframe', object.behavior);
-    victim = Dangers.indexOf(object);
-    Dangers.splice(victim, 1);
+//helper functions waow
+
+function Randint(max) {
+  let output = Math.floor(Math.random() * max);
+  if (output == max){
+    return output - 1;
+  }
+  else{
+    return output;
+  }
 }
-
-
 
 function EqCheck(a, b) {
     return a.every((val, index) => val === b[index]);}
 
-function HitReg(){
-    checkhere = [];
-    collecthere = [];
-    Dangers.sort((a, b) => a.z - b.z);
-    Dangers.forEach(function(item){ //put everyones coords inside
-        let widthfactor = item.size;
-        if (!item.active) return;
-        switch (true){
-            case item instanceof DSweeper:
-                if (item.direction == "vertical"){
-                for (let w = 0; w < widthfactor; w++){
-                    for (let i = 1; i < 10; i++){
-                        checkhere.push([item.pos + w, i])
-                        }
-                    }
-                }
-                else{
-                    for (let w = 0; w < widthfactor; w++){
-                        for (let i = 1; i < 10; i++){
-                            checkhere.push([i, item.pos + w])
-                        }
-                    }   
-                }
-                break;
-            case checkcollect(item):
-                collecthere.push([item.x, item.y])
-                break;
-            case item instanceof DSticker:
-                if (item.size != 1){
-                    for (let x = 0; x < item.size; x++){
-                        for (let y = 0; y < item.size; y++){
-                            checkhere.push([item.x + x, item.y + y]);
-                        }
-                    }
-                }
-                else{checkhere.push([item.x, item.y])}
-                break;
-            default:
-                checkhere.push([item.x, item.y])
-                break;
-        }
-    });
-    if (checkhere.some(itm => EqCheck(itm, PlayerPos))){
-        hurt();
-    }
-    if (collecthere.some(itm => EqCheck(itm, PlayerPos))){
-        Dangers.forEach(function(item){
-            if (item.x == PlayerPos[0] && item.y == PlayerPos[1]){
-                item.safe();
-            }
-        })
-    }
-}
-
 function checkcollect(item){
     return (item instanceof DCollect || item instanceof IHeal);
 }
-function death(){
-    clearInterval(Interval);
-    UpNextHandler();
-    audiohandler.stopBGM();
-    hurtcd = 0;
-    ishurt = false;
-    silence = 1;
-    bpm = 120;
-    soundspeed = bpm/BASEBPM;
-    for (let i = Dangers.length - 1; i >= 0; i--){killme(Dangers[i])}
-    startup = 0;
-    screenstate = "gameover";
-}
 
-function punishpaus(){
-    screenstate = "punishment";
-    audiohandler.play("tsktsktsk", "bgm");
-}
-
-function hurt(){
-    if (!ishurt){
-    audiohandler.play("hurt", "sfx");
-    ishurt = true;
-    hurtcd = 180;
-    playeropac = 0.6;
-    if (variant == "doubledamage"){
-        RemoveHeart();
-        RemoveHeart();
-        hp -= 2;
-    }
-    else if (variant == "glassbones"){
-        for (let i = hp; i > 0; i--) {
-            RemoveHeart();
-        }
-        hp = 0;
-    }
-    else {
-        RemoveHeart();
-        hp -= 1;
-    }
-    if (hp <= 0) death()
-    }
-}
-
-function hpup(){
-    if (hp != 10){
-        hp += 1;
-        CreateHeart();
-    }
-}
-
-function start(){
-    hp = 0;
-    transitiontime = false;
-    transition = 0;
-    bpm -= modifierhandler.bpmchange;
-    increasetempo();
-    for (i = 1; i <= starthp; i++){
-        hpup();
-    }
-    screenstate = "game";
-    attacker.load(Randint(ATTACK_COUNT)+1);
-    artful.PulseActive = true;
-}
-
-function gtransitionstart(){
-    musicfade = 0;
-    attacker.tick = 0;
-    attacker.pattern = 0;
-    PlayerPos = [5,5];
-    beat = 0;
-    tickfrequency = 1;
-    startup = 0;
-    starthp = 5;
-    attacknum = 1;
-    attacker.randplus = 0;
-    attacker.randmax = 9;
-    playeropac = 1;
-    variant = "none";
-    audiohandler.stopBGM();
-    bpm = 120;
-    screenstate = "game";
-    audiohandler.volumecontrol();
-    audiohandler.play("countin", "bgm");
-    Interval = setInterval(bpmtick, ((60/bpm) / 2)*1000);
-    inputhandler.ChangeDelay(bpm);
-}
-
-function rippunish(){
-    death();
-    punishpaus();
-}
-
-
-const mixer = new Mixer();
-const audiohandler = new AudioHandler();
-const attacker = new AttackLoader();
 const playermove = new Event("player-movement");
-const inputhandler = new InputHandler();
-const modifierhandler = new ModifierHandler();
-
-document.addEventListener("fps", mainloop());
+const GAME = new GameHandler();
