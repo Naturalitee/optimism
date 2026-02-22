@@ -407,8 +407,8 @@ class Indicator {
     this.duration = duration ?? 0;
     this.active = false;
     this.behavior = this.behavior.bind(this);
-    if (!this.props.RefreshOnFrame) { document.addEventListener('tick', this.behavior); }
-    else { document.addEventListener('refreshframe', this.behavior); }
+    let refreshCondition = this.props.refreshCondition ?? "tick";
+    document.addEventListener(refreshCondition, this.behavior);  
   }
 
   behavior() {
@@ -489,7 +489,7 @@ class IWarp extends Indicator {
 class IConfetti extends Indicator {
   constructor() {
     const desx = Randint(GAME.SCREEN.width - GLOBAL_OFFSET) + GLOBAL_OFFSET;
-    super(desx, -50, 40, {RefreshOnFrame: true});
+    super(desx, -50, 40, {refreshCondition: "refreshframe"});
     this.rotation = 0;
     this.rotationspeed = Math.random() * 5 * ((Randint(2) == 0) ? -1 : 1);
     this.forceY = Math.random() * 10;
@@ -507,6 +507,69 @@ class IConfetti extends Indicator {
 
   draw() {
     GAME.artful.DrawConfetti(this.x, this.y, this.rotation, this.color);
+  }
+}
+
+class ISleepy extends Indicator {
+  constructor() {
+    const X_OFFSET = GAME.variant == "big" ? 60 : 20;
+    const Y_OFFSET = GAME.variant == "big" ? -60 : -20; //how much offset diagonally?
+    let posx = X_OFFSET + GLOBAL_OFFSET + ((GAME.playerPos[0]) * GAME.artful.inc - (GAME.artful.inc / 2));
+    let posy = Y_OFFSET + GLOBAL_OFFSET + ((GAME.playerPos[1]) * GAME.artful.inc - (GAME.artful.inc / 2)); 
+    super(posx, posy, 120, {refreshCondition: "refreshframe"});
+    this.textSize = GAME.variant == "big" ? 32 : 12;
+    this.opacity = 0;
+  }
+
+  behavior() {
+    const MAX_DURATION = 120;
+    this.x += 0.2;
+    this.y -= 0.15;
+    if (this.duration > MAX_DURATION - 10) {
+      this.opacity += 0.1;
+    }
+    else if (this.duration < 11) {
+      this.opacity -= 0.1;
+    }
+    this.duration -= 1;
+    if (this.duration <= 0){
+      GAME.killMe(this, GAME.pauseDat.pauseStorage);
+    }
+  }
+
+  draw() {
+    GAME.artful.DrawText("Z", {size: this.textSize, font: "Times New Roman"},`rgba(255,255,255,${this.opacity})`, this.x, this.y, {isCentered: true, preCentered: true});
+  }
+}
+
+class IShadowFraud extends Indicator {
+  constructor(x, y) {
+    const inc = GAME.artful.inc
+    let posx = GLOBAL_OFFSET + (x * inc);
+    let posy = GLOBAL_OFFSET + (y * inc);
+    super(posx, posy, 0, {refreshCondition: "refreshframe"});
+    this.xvel = Randint(2) == 1 ? 3 : -3;
+    this.yvel = Randint(2) == 1 ? 3 : -3;
+  }
+
+  draw(inc) {
+    let posx = this.x - (inc / 2);
+    let posy = this.y - (inc / 2);
+    GAME.artful.DrawCircle(posx, posy, 1, `rgb(0, 0, 255)`, `rgb(118, 118, 118)`);
+    GAME.artful.DrawMyEyes(posx, posy, ".", 56, "Fira Sans", `rgba(255, 255, 255, 1)`, 7.5, 0, 5, 0);
+    GAME.artful.DrawMyMouth(posx, posy, ")", 28, "Arial", `rgba(255, 255, 255, 1)`, -5, 7.5, 270);
+  }
+
+  behavior() {
+    console.log(this.x, this.y);
+    this.x += this.xvel;
+    this.y += this.yvel;
+    if (this.x <= GLOBAL_OFFSET || this.x >= 600 + GLOBAL_OFFSET) {
+      this.xvel *= -1;
+    }
+    if (this.y <= GLOBAL_OFFSET || this.y >= 600 - GLOBAL_OFFSET) {
+      this.yvel *= -1;
+    }
   }
 }
 

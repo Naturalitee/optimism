@@ -5,15 +5,9 @@ class GameHandler {
         this.startingHP = 5;
         this.hp = 0;
         this.Dangers = [];
+        this.BPMtick = this.BPMtick.bind(this);
         this.Interval = TESTINGMODE ? setInterval(this.BPMtick, ((60/this.bpm) / 2)*1000) : null;
         this.artful = null;
-        document.addEventListener("DOMContentLoaded", () => {
-            this.SCREEN = document.getElementById("Canvas");
-            this.SCREEN.width = this.SCREEN.clientWidth;
-            this.SCREEN.height = this.SCREEN.clientHeight;
-            this.CTX = this.SCREEN.getContext("2d");
-            this.createSubsystems();
-        }, {once: true});
         this.INCREMENT = 600 / 9;
         this.variant = "none";
         this.isHurt = false;
@@ -29,6 +23,23 @@ class GameHandler {
         this.tickFrequency = 1;
         this.beat = 0;
         this.loadedSounds = 0;
+        this.pauseDat = {
+            pauseQueued: false,
+            gamePaused: false,
+            pauseBeat: 1, //should only be 1 to 16 (2 bars)
+            faceState: 0, //0 for o, 1 for >
+            pauseOverlayOpacity: 0,
+            pauseTitlePulseFrame: 0,
+            pauseButtonPulseFrame: 0,
+            pauseStorage: []
+        }
+        document.addEventListener("DOMContentLoaded", () => {
+            this.SCREEN = document.getElementById("Canvas");
+            this.SCREEN.width = this.SCREEN.clientWidth;
+            this.SCREEN.height = this.SCREEN.clientHeight;
+            this.CTX = this.SCREEN.getContext("2d");
+            this.createSubsystems();
+        }, {once: true});
     }
 
     createSubsystems() {
@@ -63,6 +74,7 @@ class GameHandler {
     }
 
     BPMtick() {
+        if (this.pauseDat.gamePaused) return;
         document.dispatchEvent(tick);
         this.beat += 1;
         if (this.startUp == 4) {
@@ -79,12 +91,12 @@ class GameHandler {
         let posy = GLOBAL_OFFSET + (this.playerPos[1] * inc - (inc / 2));
         let color, stroke;
         stroke = `rgba(137,137,137,${this.artful.playerOpac})`;
-        if (!this.mixer.visible) { stroke = "rgba(0,0,0,0)"; }
+        if (!this.mixer.visible && !this.pauseDat.gamePaused) { stroke = "rgba(0,0,0,0)"; }
         if (this.variant == "inverted") {
             color = `rgba(174, 255, 0, ${this.artful.playerOpac})`;
-        } else if (this.variant == "disco") {
+        } else if (this.variant == "disco" && !this.pauseDat.gamePaused) {
             color = `rgba(${255 - (63.75 * this.mixer.lastmoved)}, ${255 - (63.75 * this.mixer.lastmoved)}, 0, ${this.artful.playerOpac})`;
-        } else if (this.variant == "pulse") {
+        } else if (this.variant == "pulse" && !this.pauseDat.gamePaused) {
             color = this.mixer.visible ? `rgba(255, 255, 0, ${this.artful.playerOpac})` : `rgba(255, 255, 0, 0)`;
         } else {
             color = `rgba(255, 255, 0, ${this.artful.playerOpac})`;
@@ -101,7 +113,7 @@ class GameHandler {
 
         if (this.variant == "disco") {
             const opacity = 63.75 * this.mixer.lastmoved;
-            color = `rgba(${opacity}, ${opacity}, ${opacity}, 1)`;
+            color = this.pauseDat.gamePaused ? "rgb(0,0,0)" : `rgba(${opacity}, ${opacity}, ${opacity}, 1)`;
             ox = (Math.random() * 4 - 2) * scale;
             oy = (Math.random() * 4 - 2) * scale;
         } else if (this.variant == "doubledamage") {
@@ -114,6 +126,10 @@ class GameHandler {
         }
 
         switch (true) {
+            case this.pauseDat.gamePaused && this.variant != "disco":
+                this.artful.DrawMyEyes(posx, posy, "-", 32 * scale, "Arial", color, 7.5 * scale, 0, 5 * scale, 7);
+                this.artful.DrawMyMouth(posx, posy, this.pauseDat.faceState == 1 ? "^" : "o", 20, "Verdana", color, 0, this.pauseDat.faceState == 1 ? 10 : 7.5);
+                break;
             case this.isHurt:
                 this.artful.DrawMyEyes(posx, posy, "x", 16 * scale, "Verdana", color, 7.5 * scale, ox, 5 * scale, oy, "bold");
                 this.artful.DrawMyMouth(posx, posy, ")", 28, "Arial", color, -5, 7.5, 270);
@@ -174,11 +190,28 @@ class GameHandler {
             if (this.artful.textAnimFrames == 30) { this.textFace *= -1; this.artful.textAnimFrames = 0; }
         }
         if (this.screenState == "game") {
+            const data = this.pauseDat;
+            if (data.gamePaused) {
+                document.dispatchEvent(PausedRefreshOnFrame);
+                if (this.audiohandler.musicFade > 0) {
+                    this.audiohandler.musicFade -= 0.5;
+                    this.audiohandler.volumecontrol();
+                }
+                if (data.pauseTitlePulseFrame > 0) {
+                    data.pauseTitlePulseFrame -= 1;
+                }
+                if (data.pauseButtonPulseFrame > 0) {
+                    data.pauseButtonPulseFrame -= 1;
+                }
+                return;
+            }
             if (this.isHurt) {
                 this.hurtCooldown -= 1;
                 if (this.hurtCooldown == 0) { this.isHurt = false; this.artful.playerOpac = 1; }
             }
-            if (this.healed != 0) { this.healed -= 1; }
+            if (this.healed != 0) { 
+                this.healed -= 1; 
+            }
             if (this.artful.eyeOffset[1] != 0) {
                 this.artful.eyeOffsetFrames -= 1;
                 if (this.artful.eyeOffsetFrames == 0) { this.artful.eyeOffset = [0, 0]; }
@@ -192,40 +225,55 @@ class GameHandler {
         this.CTX.clearRect(0, 0, this.SCREEN.width, this.SCREEN.height);
         this.artful.DrawFrame();
         if (this.screenState == "warning") {
-            this.artful.DrawText("WARNING", {size: 64, font: "Arial"}, "rgba(255, 0, 0, 1)", GLOBAL_OFFSET, 100, true);
-            this.artful.DrawText('This "game" contains flashing lights. Do not proceed if', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 200, true);
-            this.artful.DrawText('you are sensitive to flashing lights or suffer from', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 230, true);
-            this.artful.DrawText('photosensitive epilepsy.', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 260, true);
-            this.artful.DrawText('click anywhere to continue.', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 600, true);
+            this.artful.DrawText("WARNING", {size: 64, font: "Arial"}, "rgba(255, 0, 0, 1)", GLOBAL_OFFSET, 100, {isCentered: true, definedCenter: true});
+            this.artful.DrawText('This "game" contains flashing lights. Do not proceed if', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 200, {isCentered: true, definedCenter: true});
+            this.artful.DrawText('you are sensitive to flashing lights or suffer from', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 230, {isCentered: true, definedCenter: true});
+            this.artful.DrawText('photosensitive epilepsy.', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 260, {isCentered: true, definedCenter: true});
+            this.artful.DrawText('click anywhere to continue.', {size: 24, font: "Arial"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 600, {isCentered: true, definedCenter: true});
         }
         if (this.screenState == "loading") {
-            this.artful.DrawText("Loading...", {size: 64, font: "Comic Sans MS"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 350, true);
-            this.artful.DrawText(`${this.loadedSounds}/${SOUNDCOUNT}`, {size: 36, font: "Comic Sans MS"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 500, true);
+            this.artful.DrawText("Loading...", {size: 64, font: "Comic Sans MS"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 350, {isCentered: true, definedCenter: true});
+            this.artful.DrawText(`${this.loadedSounds}/${SOUNDCOUNT}`, {size: 36, font: "Comic Sans MS"}, "rgba(255, 255, 255, 1)", GLOBAL_OFFSET, 500, {isCentered: true, definedCenter: true});
         }
         if (this.screenState == "menu") {
             this.artful.DrawImage(this.textFace == 1 ? TITLE1 : TITLE2, 40, -230);
             this.artful.DrawImage(this.textFace == 1 ? PLAY1 : PLAY2, 40, 0);
             this.artful.DrawImage(this.textFace == 1 ? MOD1 : MOD2, 40, 130);
-            this.artful.DrawText("volume (use +/- keys to control)", {size: 24, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 550, true);
-            this.artful.DrawText(globalvol * 10, {size: 36, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 600, true);
+            this.artful.DrawText("volume (use +/- keys to control)", {size: 24, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 550, {isCentered: true, definedCenter: true});
+            this.artful.DrawText(globalvol * 10, {size: 36, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 600, {isCentered: true, definedCenter: true});
             this.CTX.fillStyle = `rgba(0, 0, 0, ${this.transition / 100})`;
             this.CTX.fillRect(GLOBAL_OFFSET, GLOBAL_OFFSET, this.INCREMENT * 9, this.INCREMENT * 9);
         }
         if (this.screenState == "gameover") {
             this.artful.DrawImage(this.textFace == 1 ? GAMEOVER1 : GAMEOVER2, 20, -230);
-            if (this.startUp >= 90)  { this.artful.DrawText("Score:", {size: 48, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 300, true); }
-            if (this.startUp >= 180) { this.artful.DrawText(this.attacker.attackNum - 1, {size: 72, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 400, true); }
-            if (this.startUp >= 270) { this.artful.DrawText("back to menu", {size: 36, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 550, true); }
+            if (this.startUp >= 90)  { this.artful.DrawText("Score:", {size: 48, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 300, {isCentered: true, definedCenter: true}); }
+            if (this.startUp >= 180) { this.artful.DrawText(this.attacker.attackNum - 1, {size: 72, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 400, {isCentered: true, definedCenter: true}); }
+            if (this.startUp >= 270) { this.artful.DrawText("back to menu", {size: 36, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 550, {isCentered: true, definedCenter: true}); }
         }
         if (this.screenState == "punishment") {
-            this.artful.DrawText("RIP old punishment screen :(", {size: 36, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 350, true);
+            this.artful.DrawText("RIP old punishment screen :(", {size: 36, font: "Comic Sans MS"}, "rgb(255,255,255)", GLOBAL_OFFSET, 350, {isCentered: true, definedCenter: true});
         }
         if (this.screenState == "game") {
-            this.drawHazards(this.INCREMENT);
-            this.artful.DrawGrid(this.startUp);
-            if (this.startUp >= 4) { this.drawPlayer(this.INCREMENT); }
-            this.mixer.drawspeedup();
-            this.artful.PulseEffect();
+            if (!this.pauseDat.gamePaused){
+                this.drawHazards(this.INCREMENT);
+                this.artful.DrawGrid(this.startUp);
+                if (this.startUp >= 4) { this.drawPlayer(this.INCREMENT); }
+                this.mixer.drawspeedup();
+                this.artful.PulseEffect();
+            }
+            else {
+                const data = this.pauseDat
+                this.drawHazards(this.INCREMENT);
+                this.artful.DrawGrid(this.startUp);
+                this.mixer.drawspeedup();
+                if (this.pauseDat.pauseOverlayOpacity < 30) {
+                    this.pauseDat.pauseOverlayOpacity += 1;
+                }
+                this.artful.drawPauseOverlay();
+                data.pauseStorage.forEach(item => item.draw());
+                this.drawPlayer(this.INCREMENT);
+                this.artful.PulseEffect();
+            }
         }
     }
 
@@ -271,11 +319,57 @@ class GameHandler {
         }
     }
 
-    killMe(object) {
+    killMe(object, array) {
+        const container = array ?? this.Dangers
         document.removeEventListener('tick', object.behavior);
-        if (object instanceof IConfetti) { document.removeEventListener('refreshframe', object.behavior); }
-        let victim = this.Dangers.indexOf(object);
-        this.Dangers.splice(victim, 1);
+        if (object.props.refreshCondition != undefined) { 
+            document.removeEventListener('refreshframe', object.behavior); 
+        }
+        let victim = container.indexOf(object);
+        container.splice(victim, 1);
+    }
+
+    queuePauseGame(){
+        if (this.pauseDat.pauseQueued) return;
+        this.pauseDat.pauseQueued = true;
+        console.log("queued for next beat!");
+        document.addEventListener('tick', () => {
+            this.audiohandler.musicFade = 100;
+            this.pauseGame();
+        }, {once: true});  
+    }
+
+    pauseGame(){
+        this.pauseDat.gamePaused = true;
+        this.pauseTick = this.pauseTick.bind(this);
+        this.pauseMenuInterval = setInterval(this.pauseTick, ((60/151) / 2)*1000); //songs 151 bpm and I dont wanna calc it manually..
+        this.audiohandler.play("pausesong", "bgm");
+    }
+
+    queueUnpauseGame(){
+        
+    }
+
+    unpauseGame(){
+
+    }
+
+    pauseTick(){
+        const data = this.pauseDat;
+        if (data.pauseBeat == 16) {
+            data.pauseBeat = 0;
+        }
+        data.pauseBeat += 1;
+        if ((data.pauseBeat - 1) % 4 == 0) {
+            data.pauseButtonPulseFrame = 15;
+            data.pauseStorage.push(new ISleepy());
+        }
+        if ((data.pauseBeat - 1) % 2 == 0) {
+            data.pauseTitlePulseFrame = 30;
+        }
+        if ((data.pauseBeat - 1) % 8 == 0) {
+            data.faceState = !data.faceState;
+        }
     }
 
     gameOver() {
@@ -602,6 +696,12 @@ function EqCheck(a, b) {
 
 function checkcollect(item){
     return (item instanceof DCollect || item instanceof IHeal);
+}
+
+function ease(frame, maxframes){ //returns a value from 0 to 1, multiply to whatever value you want to ease!
+    let t = (frame - 1) / (maxframes - 1);
+    let eased = (Math.cos(Math.PI * t) - 1) / 2;
+    return eased;
 }
 
 const playermove = new Event("player-movement");

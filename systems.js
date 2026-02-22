@@ -46,17 +46,26 @@ class InputHandler {
 
     KeyPress(e) {
         const game = this.game;
-        if (["a", "s", "w", "d"].includes(e.key.toLowerCase()) && game.startUp == 5) {
+        const bindings = {
+            movement: ["a", "s", "w", "d"],
+            volumecontrol: ["-", "=", "_", "+"],
+            pause: ["escape", "esc", "p"]
+        }
+        const key = e.key.toLowerCase();
+        if (bindings.movement.includes(key) && game.startUp == 5) {
             if (!e.repeat) {
-                this.Movement(e.key.toLowerCase());
+                this.Movement(key);
                 this.lastMoveTime = performance.now();
             }
-            this.keyHeld = e.key.toLowerCase();
+            this.keyHeld = key
         }
-        if (["-", "=", "_", "+"].includes(e.key)) {
+        if (bindings.volumecontrol.includes(key)) {
             (e.key == "-" || e.key == "_")
-                ? game.audiohandler.volumecontrol("down")
-                : game.audiohandler.volumecontrol("up");
+                ? game.audiohandler.volumecontrol("down") //if minus pressed, go down
+                : game.audiohandler.volumecontrol("up"); //else up
+        }
+        if (bindings.pause.includes(key)) {
+            game.queuePauseGame();
         }
     }
 
@@ -150,6 +159,7 @@ class AudioHandler {
         await this.createsound("titletheme", `./sound/bgm/title_theme.mp3`, this.bgms);
         await this.createsound("countin", `./sound/bgm/countin.mp3`, this.bgms);
         await this.createsound("tsktsktsk", `./sound/bgm/tsktsktsk.mp3`, this.bgms);
+        await this.createsound("pausesong", `./sound/bgm/pausesong.mp3`, this.bgms);
     }
 
     async createsound(name, url, destination) {

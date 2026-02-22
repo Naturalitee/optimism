@@ -12,7 +12,7 @@ class Artful {
         this.textAnimFrames = 0;
         this.PulseActive = false;
         this.PulseFrame = 0;
-        this.MoverStorage = [];
+        this.MoverStorage = []; 
     }
 
     DrawFrame() {
@@ -22,6 +22,68 @@ class Artful {
         this.ctx.lineWidth = 5;
         this.ctx.strokeStyle = this.BorderColor();
         this.ctx.strokeRect(22.5, 22.5, this.maxx - 45, this.maxy - 45);
+    }
+
+    drawPauseOverlay(){
+        const game = this.game
+        const inc = this.inc
+        const pausedata = this.game.pauseDat;
+        const TITLEPULSEDURATION = 30;
+        const BUTTONPULSEDURATION = 15;
+        const TITLEPULSEMAX = 4; //how big the text gets\
+        const BUTTONPULSEMAX = 2; //how big the text gets
+        let TITLEY_OFFSET = -50;
+        let TITLEX_OFFSET = 0;
+        let RESUMEBUTTONY_OFFSET = 70;
+        let QUITBUTTONY_OFFSET = 70;
+        let RESUMEBUTTONX_OFFSET = 80;
+        let QUITBUTTONX_OFFSET = 80; //must stay positive as they go in oppsites..
+        let BUTTONSIZE = 28 + (BUTTONPULSEMAX * ease(BUTTONPULSEDURATION - pausedata.pauseButtonPulseFrame, BUTTONPULSEDURATION));
+        let TITLESIZE = 44 + (TITLEPULSEMAX * ease(TITLEPULSEDURATION - pausedata.pauseTitlePulseFrame, TITLEPULSEDURATION));
+        if (game.playerPos[1] == 1) {
+            TITLEY_OFFSET += 100;
+            RESUMEBUTTONY_OFFSET += 20;
+            QUITBUTTONY_OFFSET += 20;
+        }
+        if (game.playerPos[1] == 9) {
+            RESUMEBUTTONY_OFFSET = -10;
+            QUITBUTTONY_OFFSET = -10;
+            RESUMEBUTTONX_OFFSET = 100;
+            QUITBUTTONX_OFFSET = 100;
+        }
+        if (game.playerPos[0] <= 2) {
+            TITLEX_OFFSET += 60;
+            RESUMEBUTTONX_OFFSET = 90;
+            QUITBUTTONX_OFFSET = -96;
+            RESUMEBUTTONY_OFFSET = -15;
+            QUITBUTTONY_OFFSET = 15;
+        }
+        if (game.playerPos[0] >= 8) {
+            TITLEX_OFFSET -= 60;
+            RESUMEBUTTONX_OFFSET = -90;
+            QUITBUTTONX_OFFSET = 84;
+            RESUMEBUTTONY_OFFSET = -15;
+            QUITBUTTONY_OFFSET = 15;
+        }
+        if (game.variant == "big"){
+            TITLEY_OFFSET *= 1.75;
+            TITLEX_OFFSET *= 1.75;
+            RESUMEBUTTONX_OFFSET *= 1.4;
+            QUITBUTTONX_OFFSET *= 1.4;
+            RESUMEBUTTONY_OFFSET *= 1.3;
+            QUITBUTTONY_OFFSET *= 1.3;
+        }
+        const posx = GLOBAL_OFFSET + ((game.playerPos[0]) * inc - (inc / 2)) 
+        const posy = GLOBAL_OFFSET + (game.playerPos[1] * inc - (inc / 2))
+        const MENUHEADER = "PAUSED";
+        const RESUMETEXT = "resume!";
+        const QUITTEXT = "give up..."
+        this.ctx.beginPath();
+        this.ctx.fillStyle = `rgba(0, 0, 0, ${game.pauseDat.pauseOverlayOpacity / 30})`;
+        this.ctx.fillRect(GLOBAL_OFFSET, GLOBAL_OFFSET, this.maxx - GLOBAL_OFFSET * 2, this.maxy - GLOBAL_OFFSET * 2);
+        this.DrawText(MENUHEADER, {size: TITLESIZE, font: "Quantico", bold: true},`rgba(255,255,255,${game.pauseDat.pauseOverlayOpacity / 30})`, posx + TITLEX_OFFSET, posy + TITLEY_OFFSET, {isCentered: true, preCentered: true});
+        this.DrawText(RESUMETEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${game.pauseDat.pauseOverlayOpacity / 30})`, posx + RESUMEBUTTONX_OFFSET, posy + RESUMEBUTTONY_OFFSET, {isCentered: true, preCentered: true});
+        this.DrawText(QUITTEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${game.pauseDat.pauseOverlayOpacity / 30})`, posx - QUITBUTTONX_OFFSET, posy + QUITBUTTONY_OFFSET, {isCentered: true, preCentered: true})
     }
 
     DrawGrid(startup) {
@@ -285,17 +347,26 @@ class Artful {
         const rectHeight = 200;
         this.ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
         this.ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
-        this.DrawText(variant.name, {size: variant.fontsize ?? 48, font: "Comic Sans MS", bold: true}, "rgb(255,255,255)", rectX, rectY + 75, true, rectWidth);
-        this.DrawText(variant.description, {size: 24, font: "Comic Sans MS", bold: true}, "rgb(255,255,255)", rectX, rectY + 150, true, rectWidth);
+        this.DrawText(variant.name, {size: variant.fontsize ?? 48, font: "Comic Sans MS", bold: true}, "rgb(255,255,255)", rectX, rectY + 75, {isCentered: true, definedCenter: true, max: rectWidth});
+        this.DrawText(variant.description, {size: 24, font: "Comic Sans MS", bold: true}, "rgb(255,255,255)", rectX, rectY + 150, {isCentered: true, definedCenter: true, max: rectWidth});
     }
 
-    DrawText(text, fontdata, color, x, y, IsCentered, max) {
+    DrawText(text, fontdata, color, x, y, centerData) {
         this.ctx.fillStyle = color;
         let isBolded = fontdata.bold ? "bold " : "";
         this.ctx.font = isBolded + `${fontdata.size}px ${fontdata.font}`;
-        if (IsCentered) {
-            let textedge = max ? max : this.inc * 9;
-            this.ctx.fillText(text, x + (textedge - this.ctx.measureText(text).width) / 2, y);
+        if (centerData.isCentered) {
+            if (centerData.preCentered){
+                this.ctx.textAlign = "center";
+                this.ctx.textBaseline = "middle";
+                this.ctx.fillText(text,x,y);
+                this.ctx.textAlign = "start";
+                this.ctx.textBaseline = "alphabetic";
+            }
+            else if (centerData.definedCenter){
+                let textedge = centerData.max ?? this.inc * 9;
+                this.ctx.fillText(text, x + (textedge - this.ctx.measureText(text).width) / 2, y);
+            }
         } else {
             this.ctx.fillText(text, x, y);
         }

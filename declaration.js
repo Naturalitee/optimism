@@ -6,6 +6,7 @@ const TESTINGMODE = true;
 const FPS_IN_MS = 16.67; 
 const tick = new CustomEvent('tick');
 const RefreshOnFrame = new CustomEvent('refreshframe');
+const PausedRefreshOnFrame = new CustomEvent('refreshframe');
 const GLOBAL_OFFSET = 25;
 const BASEBPM = 120;
 
