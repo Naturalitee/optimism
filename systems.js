@@ -17,6 +17,7 @@ class InputHandler {
 
     ClickDetec(e) {
         const game = this.game;
+        const pausedata = game.pauseDat;
         if (game.modifierhandler.modifierTabOpen) return;
         const canvas = document.getElementById("Canvas");
         const screen = canvas.getBoundingClientRect();
@@ -29,18 +30,23 @@ class InputHandler {
         }
         let cx = (e.clientX - screen.left) * (canvas.width / screen.width);
         let cy = (e.clientY - screen.top) * (canvas.height / screen.height);
-        if (game.clickGrace == 0 && game.screenState == "menu" &&
-            (cx >= PLAYBOX.x1 && cx <= PLAYBOX.x2) && (cy >= PLAYBOX.y1 && cy <= PLAYBOX.y2)) {
+        if (game.clickGrace == 0 && game.screenState == "menu" && boundingBoxClicked(PLAYBOX, cx, cy)){
             game.transitionTime = true;
         }
-        if (game.clickGrace == 0 && game.screenState == "menu" &&
-            (cx >= MODBOX.x1 && cx <= MODBOX.x2) && (cy >= MODBOX.y1 && cy <= MODBOX.y2)) {
+        if (game.clickGrace == 0 && game.screenState == "menu" && boundingBoxClicked(MODBOX, cx, cy)) {
             game.ModifiersOpen = true;
             document.querySelector("#overlay").style.display = "flex";
         }
-        if (game.startUp == 271 && game.screenState == "gameover" &&
-            (cx >= MENUBOX.x1 && cx <= MENUBOX.x2) && (cy >= MENUBOX.y1 && cy <= MENUBOX.y2)) {
+        if (game.startUp == 271 && game.screenState == "gameover" && boundingBoxClicked(MENUBOX, cx, cy)) {
             game.screenState = "menu";
+        }
+        if (game.pauseDat.gamePaused){
+            if (boundingBoxClicked(pausedata.resumeButtonBox, cx, cy)) {
+                console.log("resume clicked");
+            }
+            else if (boundingBoxClicked(pausedata.quitButtonBox, cx, cy)) {
+                console.log("quit clicked");
+            }
         }
     }
 
@@ -91,6 +97,7 @@ class InputHandler {
 
     Movement(key) {
         const game = this.game;
+        if (game.pauseDat.gamePaused) return;
         game.artful.eyeOffsetFrames = 15;
         game.mixer.resetdisco();
         let i, j;
@@ -205,4 +212,8 @@ class AudioHandler {
         globalvol = Number(globalvol.toFixed(1));
         this.volume.gain.value = globalvol * this.silence * (1 - this.musicFade / 100);
     }
+}
+
+function boundingBoxClicked(BOX, cx, cy){
+    return (cx >= BOX.x1 && cx <= BOX.x2) && (cy >= BOX.y1 && cy <= BOX.y2);
 }

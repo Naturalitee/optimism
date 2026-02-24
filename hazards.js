@@ -519,6 +519,7 @@ class ISleepy extends Indicator {
     super(posx, posy, 120, {refreshCondition: "refreshframe"});
     this.textSize = GAME.variant == "big" ? 32 : 12;
     this.opacity = 0;
+    this.text = GAME.variant == "disco" ? "!" : "Z";
   }
 
   behavior() {
@@ -538,21 +539,38 @@ class ISleepy extends Indicator {
   }
 
   draw() {
-    GAME.artful.DrawText("Z", {size: this.textSize, font: "Times New Roman"},`rgba(255,255,255,${this.opacity})`, this.x, this.y, {isCentered: true, preCentered: true});
+    GAME.artful.DrawText(this.text, {size: this.textSize, font: "Times New Roman"},`rgba(255,255,255,${this.opacity})`, this.x, this.y, {isCentered: true, preCentered: true});
   }
 }
 
 class IShadowFraud extends Indicator {
   constructor(x, y) {
     const inc = GAME.artful.inc
-    let posx = GLOBAL_OFFSET + (x * inc);
-    let posy = GLOBAL_OFFSET + (y * inc);
+    let posx = GLOBAL_OFFSET + (x * inc) - (inc / 2);
+    let posy = GLOBAL_OFFSET + (y * inc) - (inc / 2);
     super(posx, posy, 0, {refreshCondition: "refreshframe"});
+    this.stuckBugFix(x,y);
     this.xvel = Randint(2) == 1 ? 3 : -3;
     this.yvel = Randint(2) == 1 ? 3 : -3;
   }
 
-  draw(inc) {
+  stuckBugFix(x,y){
+    if (x == 1){
+      this.x += 30;
+    }
+    if (x == 9){
+      this.x -= 30;
+    }
+    if (y == 1){
+      this.y += 30;
+    }
+    if (y == 9){
+      this.y -= 30;
+    }
+  }
+
+  draw() {
+    const inc = GAME.artful.inc;
     let posx = this.x - (inc / 2);
     let posy = this.y - (inc / 2);
     GAME.artful.DrawCircle(posx, posy, 1, `rgb(0, 0, 255)`, `rgb(118, 118, 118)`);
@@ -561,14 +579,25 @@ class IShadowFraud extends Indicator {
   }
 
   behavior() {
-    console.log(this.x, this.y);
     this.x += this.xvel;
     this.y += this.yvel;
-    if (this.x <= GLOBAL_OFFSET || this.x >= 600 + GLOBAL_OFFSET) {
+    if (this.x <= GLOBAL_OFFSET*3.2 || this.x >= 600 + GLOBAL_OFFSET) {
       this.xvel *= -1;
+      if (Math.abs(this.yvel) == this.yvel) {
+        this.yvel = 3 * (0.5 + Randint(6)/5);
+      }
+      else {
+        this.yvel = -3 * (0.5 + Randint(6)/5);
+      }
     }
-    if (this.y <= GLOBAL_OFFSET || this.y >= 600 - GLOBAL_OFFSET) {
+    if (this.y <= GLOBAL_OFFSET*3.2 || this.y >= 600 + GLOBAL_OFFSET) {
       this.yvel *= -1;
+      if (Math.abs(this.xvel) == this.xvel) {
+        this.xvel = 3 * (0.5 + Randint(6)/5);
+      }
+      else {
+        this.xvel = -3 * (0.5 + Randint(6)/5);
+      }
     }
   }
 }

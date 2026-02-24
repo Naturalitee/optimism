@@ -25,65 +25,24 @@ class Artful {
     }
 
     drawPauseOverlay(){
-        const game = this.game
-        const inc = this.inc
+        const game = this.game;
+        const inc = this.inc;
         const pausedata = this.game.pauseDat;
         const TITLEPULSEDURATION = 30;
         const BUTTONPULSEDURATION = 15;
         const TITLEPULSEMAX = 4; //how big the text gets\
         const BUTTONPULSEMAX = 2; //how big the text gets
-        let TITLEY_OFFSET = -50;
-        let TITLEX_OFFSET = 0;
-        let RESUMEBUTTONY_OFFSET = 70;
-        let QUITBUTTONY_OFFSET = 70;
-        let RESUMEBUTTONX_OFFSET = 80;
-        let QUITBUTTONX_OFFSET = 80; //must stay positive as they go in oppsites..
         let BUTTONSIZE = 28 + (BUTTONPULSEMAX * ease(BUTTONPULSEDURATION - pausedata.pauseButtonPulseFrame, BUTTONPULSEDURATION));
         let TITLESIZE = 44 + (TITLEPULSEMAX * ease(TITLEPULSEDURATION - pausedata.pauseTitlePulseFrame, TITLEPULSEDURATION));
-        if (game.playerPos[1] == 1) {
-            TITLEY_OFFSET += 100;
-            RESUMEBUTTONY_OFFSET += 20;
-            QUITBUTTONY_OFFSET += 20;
-        }
-        if (game.playerPos[1] == 9) {
-            RESUMEBUTTONY_OFFSET = -10;
-            QUITBUTTONY_OFFSET = -10;
-            RESUMEBUTTONX_OFFSET = 100;
-            QUITBUTTONX_OFFSET = 100;
-        }
-        if (game.playerPos[0] <= 2) {
-            TITLEX_OFFSET += 60;
-            RESUMEBUTTONX_OFFSET = 90;
-            QUITBUTTONX_OFFSET = -96;
-            RESUMEBUTTONY_OFFSET = -15;
-            QUITBUTTONY_OFFSET = 15;
-        }
-        if (game.playerPos[0] >= 8) {
-            TITLEX_OFFSET -= 60;
-            RESUMEBUTTONX_OFFSET = -90;
-            QUITBUTTONX_OFFSET = 84;
-            RESUMEBUTTONY_OFFSET = -15;
-            QUITBUTTONY_OFFSET = 15;
-        }
-        if (game.variant == "big"){
-            TITLEY_OFFSET *= 1.75;
-            TITLEX_OFFSET *= 1.75;
-            RESUMEBUTTONX_OFFSET *= 1.4;
-            QUITBUTTONX_OFFSET *= 1.4;
-            RESUMEBUTTONY_OFFSET *= 1.3;
-            QUITBUTTONY_OFFSET *= 1.3;
-        }
-        const posx = GLOBAL_OFFSET + ((game.playerPos[0]) * inc - (inc / 2)) 
-        const posy = GLOBAL_OFFSET + (game.playerPos[1] * inc - (inc / 2))
         const MENUHEADER = "PAUSED";
         const RESUMETEXT = "resume!";
-        const QUITTEXT = "give up..."
+        const QUITTEXT = "give up...";
         this.ctx.beginPath();
-        this.ctx.fillStyle = `rgba(0, 0, 0, ${game.pauseDat.pauseOverlayOpacity / 30})`;
+        this.ctx.fillStyle = `rgba(0, 0, 0, ${pausedata.pauseOverlayOpacity / 30})`;
         this.ctx.fillRect(GLOBAL_OFFSET, GLOBAL_OFFSET, this.maxx - GLOBAL_OFFSET * 2, this.maxy - GLOBAL_OFFSET * 2);
-        this.DrawText(MENUHEADER, {size: TITLESIZE, font: "Quantico", bold: true},`rgba(255,255,255,${game.pauseDat.pauseOverlayOpacity / 30})`, posx + TITLEX_OFFSET, posy + TITLEY_OFFSET, {isCentered: true, preCentered: true});
-        this.DrawText(RESUMETEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${game.pauseDat.pauseOverlayOpacity / 30})`, posx + RESUMEBUTTONX_OFFSET, posy + RESUMEBUTTONY_OFFSET, {isCentered: true, preCentered: true});
-        this.DrawText(QUITTEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${game.pauseDat.pauseOverlayOpacity / 30})`, posx - QUITBUTTONX_OFFSET, posy + QUITBUTTONY_OFFSET, {isCentered: true, preCentered: true})
+        this.DrawText(MENUHEADER, {size: TITLESIZE, font: "Quantico", bold: true},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.titleBox.x, pausedata.titleBox.y, {isCentered: true, preCentered: true});
+        this.DrawText(RESUMETEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.resumeButtonBox.x, pausedata.resumeButtonBox.y, {isCentered: true, preCentered: true});
+        this.DrawText(QUITTEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.quitButtonBox.x, pausedata.quitButtonBox.y, {isCentered: true, preCentered: true})
     }
 
     DrawGrid(startup) {
@@ -370,6 +329,11 @@ class Artful {
         } else {
             this.ctx.fillText(text, x, y);
         }
+    }
+
+    DrawHitBox(x1, y1, x2, y2) { //xy1 is top left, xy2 is bottom right.
+        this.ctx.strokeStyle = "#F00";
+        this.ctx.strokeRect(x1, y1, x2 - x1, y2 - y1); 
     }
 
     DrawImage(img, x, y, IsFree, width, length) {

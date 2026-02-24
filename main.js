@@ -28,6 +28,9 @@ class GameHandler {
             gamePaused: false,
             pauseBeat: 1, //should only be 1 to 16 (2 bars)
             faceState: 0, //0 for o, 1 for >
+            titleBox: {},
+            resumeButtonBox: {}, //bounding box for the resume button
+            quitButtonBox: {}, //bounding box for the resume button
             pauseOverlayOpacity: 0,
             pauseTitlePulseFrame: 0,
             pauseButtonPulseFrame: 0,
@@ -263,11 +266,11 @@ class GameHandler {
             }
             else {
                 const data = this.pauseDat
+                if (data.pauseOverlayOpacity < 30) {
                 this.drawHazards(this.INCREMENT);
                 this.artful.DrawGrid(this.startUp);
                 this.mixer.drawspeedup();
-                if (this.pauseDat.pauseOverlayOpacity < 30) {
-                    this.pauseDat.pauseOverlayOpacity += 1;
+                data.pauseOverlayOpacity += 1;
                 }
                 this.artful.drawPauseOverlay();
                 data.pauseStorage.forEach(item => item.draw());
@@ -329,6 +332,74 @@ class GameHandler {
         container.splice(victim, 1);
     }
 
+    createPauseButtonBoxes(){
+        const data = this.pauseDat;
+        const inc = this.artful.inc;    
+        const posx = GLOBAL_OFFSET + (this.playerPos[0] * inc - (inc / 2)); 
+        const posy = GLOBAL_OFFSET + (this.playerPos[1] * inc - (inc / 2));
+        const BUTTONHITBOXX = 110;
+        const BUTTONHITBOXY = 30;
+        let TITLEY_OFFSET = -50;
+        let TITLEX_OFFSET = 0;
+        let RESUMEBUTTONY_OFFSET = 70;
+        let QUITBUTTONY_OFFSET = 70;
+        let RESUMEBUTTONX_OFFSET = 80;
+        let QUITBUTTONX_OFFSET = 80; //must stay positive as they go in oppsites..
+        if (this.playerPos[1] == 1) {
+            TITLEY_OFFSET += 100;
+            RESUMEBUTTONY_OFFSET += 20;
+            QUITBUTTONY_OFFSET += 20;
+        }
+        if (this.playerPos[1] == 9) {
+            RESUMEBUTTONY_OFFSET = -10;
+            QUITBUTTONY_OFFSET = -10;
+            RESUMEBUTTONX_OFFSET = 100;
+            QUITBUTTONX_OFFSET = 100;
+        }
+        if (this.playerPos[0] <= 2) {
+            TITLEX_OFFSET += 60;
+            RESUMEBUTTONX_OFFSET = 90;
+            QUITBUTTONX_OFFSET = -96;
+            RESUMEBUTTONY_OFFSET = -15;
+            QUITBUTTONY_OFFSET = 15;
+        }
+        if (this.playerPos[0] >= 8) {
+            TITLEX_OFFSET -= 60;
+            RESUMEBUTTONX_OFFSET = -90;
+            QUITBUTTONX_OFFSET = 84;
+            RESUMEBUTTONY_OFFSET = -15;
+            QUITBUTTONY_OFFSET = 15;
+        }
+        if (this.variant == "big"){
+            TITLEY_OFFSET *= 1.75;
+            TITLEX_OFFSET *= 1.75;
+            RESUMEBUTTONX_OFFSET *= 1.4;
+            QUITBUTTONX_OFFSET *= 1.4;
+            RESUMEBUTTONY_OFFSET *= 1.3;
+            QUITBUTTONY_OFFSET *= 1.3;
+        }
+        data.titleBox = {
+            x: posx + TITLEX_OFFSET,
+            y: posy + TITLEY_OFFSET,
+        }
+        data.resumeButtonBox = {
+            x: posx + RESUMEBUTTONX_OFFSET,
+            y: posy + RESUMEBUTTONY_OFFSET,
+            x1: posx + RESUMEBUTTONX_OFFSET - BUTTONHITBOXX/2,
+            y1: posy + RESUMEBUTTONY_OFFSET - BUTTONHITBOXY/2,
+            x2: posx + RESUMEBUTTONX_OFFSET + BUTTONHITBOXX/2,
+            y2: posy + RESUMEBUTTONY_OFFSET + BUTTONHITBOXY/2
+        }
+        data.quitButtonBox = {
+            x: posx - QUITBUTTONX_OFFSET,
+            y: posy + QUITBUTTONY_OFFSET,
+            x1: posx - QUITBUTTONX_OFFSET - BUTTONHITBOXX/2,
+            y1: posy + QUITBUTTONY_OFFSET - BUTTONHITBOXY/2,
+            x2: posx - QUITBUTTONX_OFFSET + BUTTONHITBOXX/2,
+            y2: posy + QUITBUTTONY_OFFSET + BUTTONHITBOXY/2
+        }
+    }
+
     queuePauseGame(){
         if (this.pauseDat.pauseQueued) return;
         this.pauseDat.pauseQueued = true;
@@ -340,10 +411,21 @@ class GameHandler {
     }
 
     pauseGame(){
-        this.pauseDat.gamePaused = true;
+        const data = this.pauseDat;
+        data.gamePaused = true;
         this.pauseTick = this.pauseTick.bind(this);
+        this.createPauseButtonBoxes();
         this.pauseMenuInterval = setInterval(this.pauseTick, ((60/151) / 2)*1000); //songs 151 bpm and I dont wanna calc it manually..
         this.audiohandler.play("pausesong", "bgm");
+        let existingShadowMe;
+        this.Dangers.forEach((item) => {
+            if (item instanceof ShadowMe) {
+                existingShadowMe = item;
+            }
+        });
+        if (existingShadowMe) {
+            this.pauseDat.pauseStorage.push(new IShadowFraud(existingShadowMe.x, existingShadowMe.y));
+        }
     }
 
     queueUnpauseGame(){
