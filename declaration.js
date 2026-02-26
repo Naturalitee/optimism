@@ -44,6 +44,10 @@ const GAMEOVER2 = new Image();
 GAMEOVER2.src = "./assets/gameover2.png";
 const HEART = new Image();
 HEART.src = "./assets/heart.png"
+const TRUCKR = new Image();
+TRUCKR.src = "./assets/truckr.png"
+const TRUCKL = new Image();
+TRUCKL.src = "./assets/truckl.png"
 const PLAYBOX = {
     x1: 264,
     y1: 294, 

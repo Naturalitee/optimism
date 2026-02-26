@@ -51,7 +51,7 @@ class AttackLoader {
     DeclareUpNext() {
         let inputlist = [];
         if (this.nextattack in WARP_COORDS) inputlist.push("warp");
-        if ((this.game.attackNum + 2) % 10 == 0) inputlist.push("healingheart");
+        if ((this.attackNum + 2) % 10 == 0) inputlist.push("healingheart");
         UpNextHandler(inputlist);
     }
 
@@ -79,18 +79,18 @@ class AttackLoader {
                     this.load(Randint(ATTACK_COUNT) + 1);
                     this.tick = 1;
                     game.beat = 1;
-                    game.attackNum += 1;
+                    this.attackNum += 1;
                     game.isInterlude = false;
                     game.mixer.mixuptime = false;
                     game.artful.PulseActive = true;
                 } else { this.clbrt *= -1; }
             }
-            if ((this.tick == 30 && game.attackNum % 4 != 0) || (this.tick == 14 && game.isInterlude)) {
+            if ((this.tick == 30 && this.attackNum % 4 != 0) || (this.tick == 14 && game.isInterlude)) {
                 if (this.nextattack in WARP_COORDS) {
                     game.Dangers.push(new IWarp(WARP_COORDS[this.nextattack][0], WARP_COORDS[this.nextattack][1], 3));
                 }
             }
-            if (this.tick == 32 && !TESTINGMODE && game.attackNum % 4 != 0) {
+            if (this.tick == 32 && !TESTINGMODE && this.attackNum % 4 != 0) {
                 this.load(Randint(ATTACK_COUNT) + 1);
                 if ((game.variant == "shadowme" || game.variant == "strikes") && [14, 15, 39].includes(this.curattack)) {
                     this.load(38, true);
@@ -100,10 +100,10 @@ class AttackLoader {
                 this.clearboard();
                 if (!TESTINGMODE) {
                     this.clearboard();
-                    if (game.attackNum % 4 != 0) {
+                    if (this.attackNum % 4 != 0) {
                         this.tick = 1;
                         game.beat = 1;
-                        game.attackNum += 1;
+                        this.attackNum += 1;
                         game.artful.PulseActive = true;
                     } else {
                         this.pattern = attacks.slice(0 + (ATTACK_COUNT) * ATTACK_PATTERN_LENGTH, ATTACK_PATTERN_LENGTH * ATTACK_COUNT + INTERLUDE_LENGTH);
@@ -113,7 +113,7 @@ class AttackLoader {
                     }
                 }
             }
-            if (game.attackNum % 10 == 0 && this.tick == 1 && !game.isInterlude) {
+            if (this.attackNum % 10 == 0 && this.tick == 1 && !game.isInterlude) {
                 game.Dangers.push(new IHeal(Randint(9) + 1, Randint(9) + 1, 50));
             }
             if ((this.curattack == false || this.pattern == false) && !TESTINGMODE) {

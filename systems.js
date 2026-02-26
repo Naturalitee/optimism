@@ -30,10 +30,10 @@ class InputHandler {
         }
         let cx = (e.clientX - screen.left) * (canvas.width / screen.width);
         let cy = (e.clientY - screen.top) * (canvas.height / screen.height);
-        if (game.clickGrace == 0 && game.screenState == "menu" && boundingBoxClicked(PLAYBOX, cx, cy)){
+        if (this.clickGrace == 0 && game.screenState == "menu" && boundingBoxClicked(PLAYBOX, cx, cy)){
             game.transitionTime = true;
         }
-        if (game.clickGrace == 0 && game.screenState == "menu" && boundingBoxClicked(MODBOX, cx, cy)) {
+        if (this.clickGrace == 0 && game.screenState == "menu" && boundingBoxClicked(MODBOX, cx, cy)) {
             game.ModifiersOpen = true;
             document.querySelector("#overlay").style.display = "flex";
         }
@@ -42,7 +42,8 @@ class InputHandler {
         }
         if (game.pauseDat.gamePaused){
             if (boundingBoxClicked(pausedata.resumeButtonBox, cx, cy)) {
-                console.log("resume clicked");
+                console.log("unpuase clicked!")
+                game.queueUnpauseGame()
             }
             else if (boundingBoxClicked(pausedata.quitButtonBox, cx, cy)) {
                 console.log("quit clicked");
@@ -70,8 +71,13 @@ class InputHandler {
                 ? game.audiohandler.volumecontrol("down") //if minus pressed, go down
                 : game.audiohandler.volumecontrol("up"); //else up
         }
-        if (bindings.pause.includes(key)) {
-            game.queuePauseGame();
+        if (bindings.pause.includes(key) && !e.repeat) {
+            if (!game.pauseDat.gamePaused) {
+                game.queuePauseGame();
+            }
+            else {
+                game.queueUnpauseGame();
+            }
         }
     }
 
@@ -141,6 +147,8 @@ class AudioHandler {
         this.sfxs = {};
         this.sfxlist = ["yummy", "invert", "shadow", "big", "ghost", "speedier", "bruh", "oneshot", "replay", "oneshotsuccess", "reveal", "collect", "hurt", "warp", "heartstart", "heartget"];
         this.currentbgm = null;
+        this.currentbgmName = "";
+        this.currentbgmOffset = 0;
         this.silence = 1;
         this.soundSpeed = 1;
         this.volume = this.audioctx.createGain();
@@ -181,19 +189,32 @@ class AudioHandler {
         this.sfxlist.forEach(async (item) => await this.createsound(`${item}`, `./sound/sfx/${item}.mp3`, this.sfxs));
     }
 
-    play(name, type) {
+    play(name, type, props, offset = 0) {
         const game = this.game;
+        const properties = props ?? false;
         if (this.currentbgm && type == "bgm") { this.stopBGM(); }
         const sound = this.audioctx.createBufferSource();
         sound.buffer = type == "bgm" ? this.bgms[name] : this.sfxs[name];
         if (type == "bgm") {
             sound.loop = true;
+            if (!properties.ignoreSpeed) {
+                sound.playbackRate.value = this.soundSpeed;
+            }
+        }
+        if (name == "warp") {
             sound.playbackRate.value = this.soundSpeed;
         }
-        if (name == "warp") sound.playbackRate.value = this.soundSpeed;
+        sound.startTime = this.audioctx.currentTime;
+        sound.offset = offset;
         sound.connect(this.volume);
-        sound.start();
-        if (type == "bgm") { this.currentbgm = sound; }
+        sound.start(0, offset);
+        if (type == "bgm") { 
+            this.currentbgm = sound; 
+            if (name.includes("main")) {
+                this.currentbgmName = name; 
+                this.currentbgmOffset = offset;
+            }
+        }
         if (type !== "bgm") {
             sound.addEventListener("ended", () => sound.disconnect());
         }
@@ -203,6 +224,19 @@ class AudioHandler {
         this.currentbgm.stop();
         this.currentbgm.disconnect();
         this.currentbgm = null;
+    }
+
+    pauseBGM() {
+        if (!this.currentbgm) return;
+        const sound = this.currentbgm;
+        const elapsed = (this.audioctx.currentTime - sound.startTime) * sound.playbackRate.value;
+        this.currentbgmOffset = (sound.offset + elapsed) % sound.buffer.duration;
+        this.stopBGM();
+    }
+
+    resumeBGM() {
+        if (!this.currentbgmName) return;
+        this.play(this.currentbgmName, "bgm", {}, this.currentbgmOffset);
     }
 
     volumecontrol(direction) {

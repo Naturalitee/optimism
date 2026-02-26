@@ -510,6 +510,88 @@ class IConfetti extends Indicator {
   }
 }
 
+class ITruck extends Indicator { //I know it techinically instakills you but who cares!
+  constructor() {
+    const inc = GAME.artful.inc;
+    const FRAMESTEPS = 30; //how much should it move every frame?
+    const frames = 180;
+    const finalx = GLOBAL_OFFSET + (GAME.playerPos[0] * inc) - (inc / 2);
+    let posx = finalx + (FRAMESTEPS * frames);
+    let posy = GLOBAL_OFFSET + (GAME.playerPos[1] * inc) - (inc / 2);
+    super(posx, posy, 0, {refreshCondition: "refreshframe"});
+    this.getDirection();
+    this.steps = FRAMESTEPS;
+    this.finalx = finalx;
+    this.frame = frames;
+  }
+
+  getDirection() {
+    let posx = GAME.playerPos[0];
+    if (posx >= 5) {
+      this.asset = TRUCKR;
+      this.direction = "right";
+    }
+    else {
+      this.asset = TRUCKL;
+      this.direction = "left";
+    }
+  }
+
+  behavior() {
+    console.log(this.x);
+    this.frame -= 1;
+    if (this.direction == "left") {  
+      this.x = this.finalx + (this.steps * this.frame);
+      if (this.finalx == this.x) {
+        GAME.killMe(this); 
+      }
+    }
+    else if (this.direction == "right") {
+      this.x = this.finalx - (this.steps * this.frame);
+      if (this.finalx <= this.x + 1024) {
+        GAME.killMe(this); 
+      }
+    }
+  }
+
+  draw() {
+    const SIZE = 1024;
+    GAME.artful.DrawImage(this.asset, this.x, this.y-(SIZE/1.75), true, SIZE, SIZE);
+  }
+}
+
+class ITextFlash extends Indicator {
+  constructor(text, container) {
+    const inc = GAME.artful.inc;
+    let posx = GLOBAL_OFFSET + (5 * inc - (inc / 2));
+    let posy = 415;
+    super(posx, posy, 15, {refreshCondition: "refreshframe"});
+    this.opacity = 0;
+    this.textSize = 800;
+    this.text = text;
+    this.container = container;
+    this.data = GAME.artful.fitTextToBox(this.text, "Roboto Mono", 600, 600, GLOBAL_OFFSET, GLOBAL_OFFSET);
+  }
+
+  behavior() {
+    if (this.duration > 11) {
+      this.opacity += 0.2;
+    }
+    else if (this.duration < 6) {
+      this.opacity -= 0.2;
+    }
+    this.duration -= 1;
+    if (this.duration <= 0){
+      GAME.killMe(this, this.container);
+    }
+  }
+
+  draw() {
+    const data = this.data;
+    GAME.artful.DrawText(this.text, {size: data.fontSize, font: "Roboto Mono"},`rgba(255,255,255,${this.opacity})`, data.x, data.y, {isCentered: true, preCentered: true});
+  }
+}
+
 class ISleepy extends Indicator {
   constructor() {
     const X_OFFSET = GAME.variant == "big" ? 60 : 20;

@@ -126,8 +126,9 @@ function TestSetBPM(){
     const INPUT = document.getElementById('BPMinput');
     GAME.bpm = Number.isNaN(Number(INPUT.value)) ? 120 : Number(INPUT.value); 
     clearInterval(GAME.Interval);
-    GAME.Interval = setInterval(GAME.bpmtick, ((60/GAME.bpm) / 2)*1000);
+    GAME.Interval = setInterval(GAME.BPMtick, ((60/GAME.bpm) / 2)*1000);
     GAME.inputhandler.ChangeDelay(GAME.bpm);
+    console.log(INPUT.value);
     }
     else {
         console.log("hey! you're gonna break my heart!");

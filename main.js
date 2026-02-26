@@ -5,6 +5,7 @@ class GameHandler {
         this.startingHP = 5;
         this.hp = 0;
         this.Dangers = [];
+        this.Overlays = [];
         this.BPMtick = this.BPMtick.bind(this);
         this.Interval = TESTINGMODE ? setInterval(this.BPMtick, ((60/this.bpm) / 2)*1000) : null;
         this.artful = null;
@@ -18,24 +19,13 @@ class GameHandler {
         this.transitionTime = false;
         this.transition = 0;
         this.healed = 0;
+        this.textFace = 1;
         this.screenState = TESTINGMODE ? "game" : "loading";
         this.startHP = 5;
         this.tickFrequency = 1;
         this.beat = 0;
         this.loadedSounds = 0;
-        this.pauseDat = {
-            pauseQueued: false,
-            gamePaused: false,
-            pauseBeat: 1, //should only be 1 to 16 (2 bars)
-            faceState: 0, //0 for o, 1 for >
-            titleBox: {},
-            resumeButtonBox: {}, //bounding box for the resume button
-            quitButtonBox: {}, //bounding box for the resume button
-            pauseOverlayOpacity: 0,
-            pauseTitlePulseFrame: 0,
-            pauseButtonPulseFrame: 0,
-            pauseStorage: []
-        }
+        this.pauseDat = this.pauseInit();
         document.addEventListener("DOMContentLoaded", () => {
             this.SCREEN = document.getElementById("Canvas");
             this.SCREEN.width = this.SCREEN.clientWidth;
@@ -63,8 +53,13 @@ class GameHandler {
         this.bpm += this.BPMchange();
         clearInterval(this.Interval);
         this.Interval = setInterval(() => this.BPMtick(), ((60 / this.bpm) / 2) * 1000);
-        this.inputhandler.ChangeDelay(this.bpm);
         let bgm = this.attacker.attackNum != 1 ? `main${Randint(BGMCOUNT) + 1}` : `main1`;
+        this.playBGMOnTempo(bgm);
+        this.inputhandler.ChangeDelay(this.bpm);
+        
+    }
+
+    playBGMOnTempo(bgm){
         this.audiohandler.soundSpeed = this.bpm / BASEBPM;
         this.audiohandler.volumecontrol();
         this.audiohandler.play(bgm, "bgm");
@@ -129,7 +124,9 @@ class GameHandler {
         }
 
         switch (true) {
-            case this.pauseDat.gamePaused && this.variant != "disco":
+            case this.pauseDat.gamePaused 
+                && this.variant != "disco" 
+                && !this.pauseDat.isUnpauseTransition:
                 this.artful.DrawMyEyes(posx, posy, "-", 32 * scale, "Arial", color, 7.5 * scale, 0, 5 * scale, 7);
                 this.artful.DrawMyMouth(posx, posy, this.pauseDat.faceState == 1 ? "^" : "o", 20, "Verdana", color, 0, this.pauseDat.faceState == 1 ? 10 : 7.5);
                 break;
@@ -165,6 +162,10 @@ class GameHandler {
         this.artful.MoverStorage = [];
     }
 
+    drawOverlays(inc) {
+        this.Overlays.forEach(item => item.draw(inc));
+    }
+
     mainloop() {
         this.gameLoop();
         this.renderFrame();
@@ -197,8 +198,12 @@ class GameHandler {
             if (data.gamePaused) {
                 document.dispatchEvent(PausedRefreshOnFrame);
                 if (this.audiohandler.musicFade > 0) {
-                    this.audiohandler.musicFade -= 0.5;
+                    this.audiohandler.musicFade -= 1;
                     this.audiohandler.volumecontrol();
+                }
+                else if (data.pauseQueued && data.loadingDone == false){
+                    data.pauseQueued = false; //when pause is fully set up, allow esc to unpause.
+                    data.loadingDone = true;
                 }
                 if (data.pauseTitlePulseFrame > 0) {
                     data.pauseTitlePulseFrame -= 1;
@@ -262,20 +267,35 @@ class GameHandler {
                 this.artful.DrawGrid(this.startUp);
                 if (this.startUp >= 4) { this.drawPlayer(this.INCREMENT); }
                 this.mixer.drawspeedup();
+                this.drawOverlays(this.INCREMENT);
                 this.artful.PulseEffect();
             }
             else {
-                const data = this.pauseDat
-                if (data.pauseOverlayOpacity < 30) {
-                this.drawHazards(this.INCREMENT);
-                this.artful.DrawGrid(this.startUp);
-                this.mixer.drawspeedup();
-                data.pauseOverlayOpacity += 1;
+                const data = this.pauseDat;
+                if (data.isUnpauseTransition){
+                    if (data.pauseOverlayOpacity > 0) {
+                    data.pauseOverlayOpacity -= 0.25 * this.bpm / BASEBPM;
+                    }
+                    this.drawHazards(this.INCREMENT);
+                    this.artful.DrawGrid(this.startUp);
+                    this.mixer.drawspeedup();
+                    this.artful.drawPauseTransition();
+                    data.pauseStorage.forEach(item => item.draw());
+                    this.drawPlayer(this.INCREMENT);
+                    this.artful.PulseEffect();
                 }
-                this.artful.drawPauseOverlay();
-                data.pauseStorage.forEach(item => item.draw());
-                this.drawPlayer(this.INCREMENT);
-                this.artful.PulseEffect();
+                else {
+                    if (data.pauseOverlayOpacity < 30) {
+                    this.drawHazards(this.INCREMENT);
+                    this.artful.DrawGrid(this.startUp);
+                    this.mixer.drawspeedup();
+                    data.pauseOverlayOpacity += 1;
+                    }
+                    this.artful.drawPauseOverlay();
+                    data.pauseStorage.forEach(item => item.draw());
+                    this.drawPlayer(this.INCREMENT);
+                    this.artful.PulseEffect();
+                }
             }
         }
     }
@@ -325,11 +345,32 @@ class GameHandler {
     killMe(object, array) {
         const container = array ?? this.Dangers
         document.removeEventListener('tick', object.behavior);
-        if (object.props.refreshCondition != undefined) { 
-            document.removeEventListener('refreshframe', object.behavior); 
+        if (object.props != undefined){
+            if (object.props.refreshCondition != undefined) { 
+                document.removeEventListener('refreshframe', object.behavior); 
+            }
         }
         let victim = container.indexOf(object);
         container.splice(victim, 1);
+    }
+
+    pauseInit(){
+        return {
+            pauseQueued: false,
+            gamePaused: false,
+            unpauseTicksLeft: 4,
+            isUnpauseTransition: false,
+            loadingDone: false,
+            pauseBeat: 1, //should only be 1 to 16 (2 bars)
+            faceState: 0, //0 for o, 1 for >
+            titleBox: {},
+            resumeButtonBox: {}, //bounding box for the resume button
+            quitButtonBox: {}, //bounding box for the resume button
+            pauseOverlayOpacity: 0,
+            pauseTitlePulseFrame: 0,
+            pauseButtonPulseFrame: 0,
+            pauseStorage: []
+        }
     }
 
     createPauseButtonBoxes(){
@@ -406,6 +447,7 @@ class GameHandler {
         console.log("queued for next beat!");
         document.addEventListener('tick', () => {
             this.audiohandler.musicFade = 100;
+            clearInterval(this.Interval);
             this.pauseGame();
         }, {once: true});  
     }
@@ -413,10 +455,11 @@ class GameHandler {
     pauseGame(){
         const data = this.pauseDat;
         data.gamePaused = true;
+        this.audiohandler.pauseBGM();
         this.pauseTick = this.pauseTick.bind(this);
         this.createPauseButtonBoxes();
         this.pauseMenuInterval = setInterval(this.pauseTick, ((60/151) / 2)*1000); //songs 151 bpm and I dont wanna calc it manually..
-        this.audiohandler.play("pausesong", "bgm");
+        this.audiohandler.play("pausesong", "bgm", {ignoreSpeed: true});
         let existingShadowMe;
         this.Dangers.forEach((item) => {
             if (item instanceof ShadowMe) {
@@ -429,15 +472,45 @@ class GameHandler {
     }
 
     queueUnpauseGame(){
-        
+        if (this.pauseDat.pauseQueued) return;
+        this.pauseDat.pauseQueued = true;
+        this.audiohandler.stopBGM();
+        this.playBGMOnTempo("countin");
+        clearInterval(this.pauseMenuInterval);
+        this.pauseMenuInterval = setInterval(this.pauseTick, (60/this.bpm)*1000);
+        this.pauseDat.isUnpauseTransition = true;
+        this.unpauseGameTransition();
+    }
+
+    unpauseGameTransition(){
+        const data = this.pauseDat;
+        if (data.unpauseTicksLeft == 1) { 
+            data.pauseStorage.push(new ITextFlash("GO!", data.pauseStorage));
+        }
+        else {
+            data.pauseStorage.push(new ITextFlash(data.unpauseTicksLeft - 1, data.pauseStorage));
+        }
+        if (data.unpauseTicksLeft == 0) {
+            this.unpauseGame();
+        }
+        data.unpauseTicksLeft -= 1;
     }
 
     unpauseGame(){
-
+        this.pauseDat.pauseStorage.forEach(item => this.killMe(item, this.pauseDat.pauseStorage));
+        this.pauseDat = this.pauseInit();
+        this.audiohandler.stopBGM();
+        clearInterval(this.pauseMenuInterval);
+        this.audiohandler.resumeBGM();
+        this.Interval = setInterval(() => this.BPMtick(), ((60 / this.bpm) / 2) * 1000);
     }
 
     pauseTick(){
         const data = this.pauseDat;
+        if (data.isUnpauseTransition) {
+            this.unpauseGameTransition();
+            return;
+        }
         if (data.pauseBeat == 16) {
             data.pauseBeat = 0;
         }
@@ -508,7 +581,7 @@ class GameHandler {
     }
 
     gtransitionstart() {
-        this.musicFade = 0;
+        this.audiohandler.musicFade = 0;
         this.attacker.tick = 0;
         this.attacker.pattern = 0;
         this.playerPos = [5, 5];
@@ -525,6 +598,7 @@ class GameHandler {
         this.bpm = 120;
         this.screenState = "game";
         this.audiohandler.volumecontrol();
+        console.log("gtransitionstart");
         this.audiohandler.play("countin", "bgm");
         this.Interval = setInterval(() => this.BPMtick(), ((60 / this.bpm) / 2) * 1000);
         this.inputhandler.ChangeDelay(this.bpm);

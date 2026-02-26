@@ -24,27 +24,6 @@ class Artful {
         this.ctx.strokeRect(22.5, 22.5, this.maxx - 45, this.maxy - 45);
     }
 
-    drawPauseOverlay(){
-        const game = this.game;
-        const inc = this.inc;
-        const pausedata = this.game.pauseDat;
-        const TITLEPULSEDURATION = 30;
-        const BUTTONPULSEDURATION = 15;
-        const TITLEPULSEMAX = 4; //how big the text gets\
-        const BUTTONPULSEMAX = 2; //how big the text gets
-        let BUTTONSIZE = 28 + (BUTTONPULSEMAX * ease(BUTTONPULSEDURATION - pausedata.pauseButtonPulseFrame, BUTTONPULSEDURATION));
-        let TITLESIZE = 44 + (TITLEPULSEMAX * ease(TITLEPULSEDURATION - pausedata.pauseTitlePulseFrame, TITLEPULSEDURATION));
-        const MENUHEADER = "PAUSED";
-        const RESUMETEXT = "resume!";
-        const QUITTEXT = "give up...";
-        this.ctx.beginPath();
-        this.ctx.fillStyle = `rgba(0, 0, 0, ${pausedata.pauseOverlayOpacity / 30})`;
-        this.ctx.fillRect(GLOBAL_OFFSET, GLOBAL_OFFSET, this.maxx - GLOBAL_OFFSET * 2, this.maxy - GLOBAL_OFFSET * 2);
-        this.DrawText(MENUHEADER, {size: TITLESIZE, font: "Quantico", bold: true},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.titleBox.x, pausedata.titleBox.y, {isCentered: true, preCentered: true});
-        this.DrawText(RESUMETEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.resumeButtonBox.x, pausedata.resumeButtonBox.y, {isCentered: true, preCentered: true});
-        this.DrawText(QUITTEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.quitButtonBox.x, pausedata.quitButtonBox.y, {isCentered: true, preCentered: true})
-    }
-
     DrawGrid(startup) {
         let x = 0;
         this.ctx.lineWidth = 5;
@@ -68,6 +47,32 @@ class Artful {
                 this.ctx.stroke();
             }
         }
+    }
+
+    drawPauseOverlay(){
+        const pausedata = this.game.pauseDat;
+        const TITLEPULSEDURATION = 30;
+        const BUTTONPULSEDURATION = 15;
+        const TITLEPULSEMAX = 4; //how big the text gets\
+        const BUTTONPULSEMAX = 2; //how big the text gets
+        let BUTTONSIZE = 28 + (BUTTONPULSEMAX * ease(BUTTONPULSEDURATION - pausedata.pauseButtonPulseFrame, BUTTONPULSEDURATION));
+        let TITLESIZE = 44 + (TITLEPULSEMAX * ease(TITLEPULSEDURATION - pausedata.pauseTitlePulseFrame, TITLEPULSEDURATION));
+        const MENUHEADER = "PAUSED";
+        const RESUMETEXT = "resume!";
+        const QUITTEXT = "give up...";
+        this.ctx.beginPath();
+        this.ctx.fillStyle = `rgba(0, 0, 0, ${pausedata.pauseOverlayOpacity / 30})`;
+        this.ctx.fillRect(GLOBAL_OFFSET, GLOBAL_OFFSET, this.maxx - GLOBAL_OFFSET * 2, this.maxy - GLOBAL_OFFSET * 2);
+        this.DrawText(MENUHEADER, {size: TITLESIZE, font: "Quantico", bold: true},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.titleBox.x, pausedata.titleBox.y, {isCentered: true, preCentered: true});
+        this.DrawText(RESUMETEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.resumeButtonBox.x, pausedata.resumeButtonBox.y, {isCentered: true, preCentered: true});
+        this.DrawText(QUITTEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.quitButtonBox.x, pausedata.quitButtonBox.y, {isCentered: true, preCentered: true})
+    }
+    
+    drawPauseTransition(){
+        const pausedata = this.game.pauseDat;
+        this.ctx.beginPath();
+        this.ctx.fillStyle = `rgba(0, 0, 0, ${pausedata.pauseOverlayOpacity / 30})`;
+        this.ctx.fillRect(GLOBAL_OFFSET, GLOBAL_OFFSET, this.maxx - GLOBAL_OFFSET * 2, this.maxy - GLOBAL_OFFSET * 2);
     }
 
     DrawCircle(x, y, scale, color, outline) {
@@ -294,7 +299,7 @@ class Artful {
         const rectHeight = 200;
         this.ctx.fillRect(rectX, rectY, rectWidth, rectHeight);
         this.ctx.strokeRect(rectX, rectY, rectWidth, rectHeight);
-        this.DrawText(mixuptext, {size: 66, font: "Comic Sans MS", bold: true}, "rgb(255,255,255)", rectX, rectHeight, true, this.inc * 5);
+        this.DrawText(mixuptext, {size: 66, font: "Comic Sans MS", bold: true}, "rgb(255,255,255)", rectX, rectHeight, {isCentered: true, definedCenter: true, max: this.inc * 5});
     }
 
     DrawMixedUp(variant, x) {
@@ -310,8 +315,9 @@ class Artful {
         this.DrawText(variant.description, {size: 24, font: "Comic Sans MS", bold: true}, "rgb(255,255,255)", rectX, rectY + 150, {isCentered: true, definedCenter: true, max: rectWidth});
     }
 
-    DrawText(text, fontdata, color, x, y, centerData) {
+    DrawText(text, fontdata, color, x, y, cData) {
         this.ctx.fillStyle = color;
+        let centerData = cData ?? false;
         let isBolded = fontdata.bold ? "bold " : "";
         this.ctx.font = isBolded + `${fontdata.size}px ${fontdata.font}`;
         if (centerData.isCentered) {
@@ -340,5 +346,31 @@ class Artful {
         if (width && length) { this.ctx.drawImage(img, x, y, width, length); }
         else if (IsFree) { this.ctx.drawImage(img, x, y); }
         else { this.ctx.drawImage(img, x + (this.inc * 9 - img.width) / 2, y + (img.height / 2)); }
+    }
+
+    fitTextToBox(text, fontFamily, maxWidth, maxHeight, boxX, boxY) {
+        let low = 1;
+        let high = 1000;
+        let best = 1;
+        while (low <= high) {
+            let mid = Math.floor((low + high) / 2);
+            this.ctx.font = `${mid}px ${fontFamily}`;
+            const metrics = this.ctx.measureText(text);
+            const width = metrics.width;
+            const height =
+                metrics.actualBoundingBoxAscent +
+                metrics.actualBoundingBoxDescent;
+            if (width <= maxWidth && height <= maxHeight) {
+                best = mid;
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return {
+            fontSize: best,
+            x: boxX + maxWidth / 2,
+            y: GLOBAL_OFFSET*1.75 + boxY + maxHeight / 2 
+        };
     }
 }
