@@ -542,6 +542,7 @@ class GameHandler {
     }
 
     giveUpButtonClicked(){
+        if (this.pauseDat.pauseQueued) return;
         const data = this.pauseDat;
         switch (data.giveUpState){
             case 0:

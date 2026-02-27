@@ -42,7 +42,6 @@ class InputHandler {
         }
         if (game.pauseDat.gamePaused){
             if (boundingBoxClicked(pausedata.resumeButtonBox, cx, cy)) {
-                console.log("unpuase clicked!")
                 game.queueUnpauseGame();
             }
             else if (boundingBoxClicked(pausedata.quitButtonBox, cx, cy)) {

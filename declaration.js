@@ -1,5 +1,5 @@
 //FOR TESTING 
-const TESTINGMODE = false;
+const TESTINGMODE = true;
 //FOR TESTING 
 
 //GAMEPLAY constants//
@@ -14,8 +14,9 @@ const BASEBPM = 120;
 var globalvol = 1;
 var screenstate = TESTINGMODE ? "game" : "loading";
 BGMCOUNT = 10;
-SFXCOUNT = 16;
-SOUNDCOUNT = BGMCOUNT + SFXCOUNT + 3; //3 denotes special bgm
+SFXCOUNT = 17;
+SPECIALBGM = 4;
+SOUNDCOUNT = BGMCOUNT + SFXCOUNT + SPECIALBGM;
 var currenttab = "none";
 var ModifiersOpen = false;
 

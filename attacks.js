@@ -197,8 +197,12 @@ class AttackLoader {
                 game.playerPos = [Number(box[1]), Number(box[2])];
                 break;
             case "I":
+                console.log("make!")
                 if (box[1] == "warp") {
                     game.Dangers.push(new IWarp(Number(box[2]), Number(box[3]), Number(box[4])));
+                }
+                if (box[1] == "tflash") {
+                    game.Overlays.push(new ITextFlash("REMEMBER!", game.Overlays));
                 }
                 break;
             case "RD":
