@@ -72,9 +72,13 @@ class GameHandler {
     }
 
     BPMtick() {
-        if (this.pauseDat.gamePaused) return;
+        const data = this.pauseDat;
+        if (data.gamePaused) return;
         document.dispatchEvent(tick);
         this.beat += 1;
+        if (data.pauseCD > 0){
+            data.pauseCD -= 1;
+        }
         if (this.startUp == 4) {
             this.start();
             this.startUp = 5;
@@ -210,6 +214,12 @@ class GameHandler {
                 }
                 if (data.pauseButtonPulseFrame > 0) {
                     data.pauseButtonPulseFrame -= 1;
+                }
+                if (data.giveUpTimer > 0) {
+                    data.giveUpTimer -= 1;
+                    if (data.giveUpTimer == 0) {
+                        data.giveUpState = 0;
+                    }
                 }
                 return;
             }
@@ -361,8 +371,12 @@ class GameHandler {
             unpauseTicksLeft: 4,
             isUnpauseTransition: false,
             loadingDone: false,
+            pauseCD: 8, //how many beats should we wait until we can pause again?
             pauseBeat: 1, //should only be 1 to 16 (2 bars)
             faceState: 0, //0 for o, 1 for >
+            giveUpTimer: 0,
+            giveUpState: 0, //the index of the text of the give up button.
+            gaveUp: false,
             titleBox: {},
             resumeButtonBox: {}, //bounding box for the resume button
             quitButtonBox: {}, //bounding box for the resume button
@@ -527,9 +541,35 @@ class GameHandler {
         }
     }
 
+    giveUpButtonClicked(){
+        const data = this.pauseDat;
+        switch (data.giveUpState){
+            case 0:
+                data.giveUpState = 1;
+                data.giveUpTimer = 90;
+                break;
+            case 1:
+                data.giveUpState = 2;
+                data.giveUpTimer = 0;
+                this.giveUpOnGame();
+                break;
+        }
+    }
+
+    giveUpOnGame(){
+        const data = this.pauseDat;
+        data.gaveUp = true;
+        data.pauseQueued = true;
+        data.pauseStorage.push(new ITruck());
+    }
+
     gameOver() {
         clearInterval(this.Interval);
         UpNextHandler();
+        for (let i = this.hp - 1; i >= 0; i--) {
+            RemoveHeart();
+        }
+        this.audiohandler.musicFade = 0;
         this.audiohandler.stopBGM();
         this.hurtCooldown = 0;
         this.isHurt = false;

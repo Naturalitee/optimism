@@ -13,6 +13,7 @@ function CreateHeart(){
 }
 
 function RemoveHeart(){
+    if (GAME.hp == 0) return;
     let lives = document.getElementById("lifecontainer");
     if (GAME.hp <= 5){
         lives.lastElementChild.remove();

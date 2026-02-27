@@ -59,13 +59,13 @@ class Artful {
         let TITLESIZE = 44 + (TITLEPULSEMAX * ease(TITLEPULSEDURATION - pausedata.pauseTitlePulseFrame, TITLEPULSEDURATION));
         const MENUHEADER = "PAUSED";
         const RESUMETEXT = "resume!";
-        const QUITTEXT = "give up...";
+        const QUITTEXT = ["give up...", "you sure?", "alright..."];
         this.ctx.beginPath();
         this.ctx.fillStyle = `rgba(0, 0, 0, ${pausedata.pauseOverlayOpacity / 30})`;
         this.ctx.fillRect(GLOBAL_OFFSET, GLOBAL_OFFSET, this.maxx - GLOBAL_OFFSET * 2, this.maxy - GLOBAL_OFFSET * 2);
         this.DrawText(MENUHEADER, {size: TITLESIZE, font: "Quantico", bold: true},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.titleBox.x, pausedata.titleBox.y, {isCentered: true, preCentered: true});
         this.DrawText(RESUMETEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.resumeButtonBox.x, pausedata.resumeButtonBox.y, {isCentered: true, preCentered: true});
-        this.DrawText(QUITTEXT, {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.quitButtonBox.x, pausedata.quitButtonBox.y, {isCentered: true, preCentered: true})
+        this.DrawText(QUITTEXT[pausedata.giveUpState], {size: BUTTONSIZE, font: "Quantico", bold: false},`rgba(255,255,255,${pausedata.pauseOverlayOpacity / 30})`, pausedata.quitButtonBox.x, pausedata.quitButtonBox.y, {isCentered: true, preCentered: true})
     }
     
     drawPauseTransition(){

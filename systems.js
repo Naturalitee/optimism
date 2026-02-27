@@ -43,10 +43,10 @@ class InputHandler {
         if (game.pauseDat.gamePaused){
             if (boundingBoxClicked(pausedata.resumeButtonBox, cx, cy)) {
                 console.log("unpuase clicked!")
-                game.queueUnpauseGame()
+                game.queueUnpauseGame();
             }
             else if (boundingBoxClicked(pausedata.quitButtonBox, cx, cy)) {
-                console.log("quit clicked");
+                game.giveUpButtonClicked();
             }
         }
     }
@@ -71,12 +71,17 @@ class InputHandler {
                 ? game.audiohandler.volumecontrol("down") //if minus pressed, go down
                 : game.audiohandler.volumecontrol("up"); //else up
         }
-        if (bindings.pause.includes(key) && !e.repeat) {
-            if (!game.pauseDat.gamePaused) {
-                game.queuePauseGame();
+        if (bindings.pause.includes(key) && !e.repeat){
+            if (game.pauseDat.pauseCD == 0) {
+                if (!game.pauseDat.gamePaused) {
+                    game.queuePauseGame();
+                }
+                else {
+                    game.queueUnpauseGame();
+                }
             }
             else {
-                game.queueUnpauseGame();
+                console.log("nope!");
             }
         }
     }
@@ -145,10 +150,10 @@ class AudioHandler {
         this.audioctx = new AudioContext();
         this.bgms = {};
         this.sfxs = {};
-        this.sfxlist = ["yummy", "invert", "shadow", "big", "ghost", "speedier", "bruh", "oneshot", "replay", "oneshotsuccess", "reveal", "collect", "hurt", "warp", "heartstart", "heartget"];
+        this.sfxlist = ["yummy", "invert", "shadow", "big", "ghost", "speedier", "bruh", "oneshot", "replay", "oneshotsuccess", "reveal", "collect", "hurt", "warp", "heartstart", "heartget", "truckdeath"];
         this.currentbgm = null;
-        this.currentbgmName = "";
-        this.currentbgmOffset = 0;
+        this.savedBGMName = "";
+        this.savedBGMOffset = 0;
         this.silence = 1;
         this.soundSpeed = 1;
         this.volume = this.audioctx.createGain();
@@ -211,8 +216,8 @@ class AudioHandler {
         if (type == "bgm") { 
             this.currentbgm = sound; 
             if (name.includes("main")) {
-                this.currentbgmName = name; 
-                this.currentbgmOffset = offset;
+                this.savedBGMName = name; 
+                this.savedBGMOffset = offset;
             }
         }
         if (type !== "bgm") {
@@ -223,20 +228,19 @@ class AudioHandler {
     stopBGM() {
         this.currentbgm.stop();
         this.currentbgm.disconnect();
-        this.currentbgm = null;
     }
 
     pauseBGM() {
         if (!this.currentbgm) return;
         const sound = this.currentbgm;
         const elapsed = (this.audioctx.currentTime - sound.startTime) * sound.playbackRate.value;
-        this.currentbgmOffset = (sound.offset + elapsed) % sound.buffer.duration;
+        this.savedBGMOffset = (sound.offset + elapsed) % sound.buffer.duration;
         this.stopBGM();
     }
 
     resumeBGM() {
-        if (!this.currentbgmName) return;
-        this.play(this.currentbgmName, "bgm", {}, this.currentbgmOffset);
+        if (!this.savedBGMName) return;
+        this.play(this.savedBGMName, "bgm", {}, this.savedBGMOffset);
     }
 
     volumecontrol(direction) {

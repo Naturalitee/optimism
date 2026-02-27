@@ -514,7 +514,7 @@ class ITruck extends Indicator { //I know it techinically instakills you but who
   constructor() {
     const inc = GAME.artful.inc;
     const FRAMESTEPS = 30; //how much should it move every frame?
-    const frames = 180;
+    const frames = 270;
     const finalx = GLOBAL_OFFSET + (GAME.playerPos[0] * inc) - (inc / 2);
     let posx = finalx + (FRAMESTEPS * frames);
     let posy = GLOBAL_OFFSET + (GAME.playerPos[1] * inc) - (inc / 2);
@@ -523,6 +523,7 @@ class ITruck extends Indicator { //I know it techinically instakills you but who
     this.steps = FRAMESTEPS;
     this.finalx = finalx;
     this.frame = frames;
+    GAME.audiohandler.play("truckdeath", "sfx");
   }
 
   getDirection() {
@@ -538,20 +539,25 @@ class ITruck extends Indicator { //I know it techinically instakills you but who
   }
 
   behavior() {
-    console.log(this.x);
     this.frame -= 1;
     if (this.direction == "left") {  
-      this.x = this.finalx + (this.steps * this.frame);
-      if (this.finalx == this.x) {
-        GAME.killMe(this); 
+      this.x = this.finalx + (this.steps * this.frame) - 1024;
+      if (this.finalx >= this.x) {
+        this.giveUp();
       }
     }
     else if (this.direction == "right") {
       this.x = this.finalx - (this.steps * this.frame);
       if (this.finalx <= this.x + 1024) {
-        GAME.killMe(this); 
+        this.giveUp();
       }
     }
+  }
+
+  giveUp(){
+    GAME.killMe(this, GAME.pauseDat.pauseStorage);
+    GAME.unpauseGame();
+    GAME.gameOver();
   }
 
   draw() {
