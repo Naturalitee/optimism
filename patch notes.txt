@@ -3,12 +3,14 @@
 > and also updated one of them lol
 > Added a hollow shell of a modifier screen! that comes next update!
 > Added an Up Next tab so you can anticipate what comes next!
+> Added a Pause Menu so you can finally play optimism by not playing optimism!
 > Added like 3 new hazards!
 > Added 4 new Mixups!
 > Reworked how some warps behaved!
 > Reworked the movement system. You can now hold down! WOAH!
 > Nerfed Attack 37 and 10, they were a bit too hard at faster speeds!
 > Nerfed Attack 24 and 43!
+> Added flashing text to attacks 38 and 44 for a bit more clarity!
 > Fixed a couple of bugs and added some more!
 
 /v1.2.1/

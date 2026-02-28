@@ -71,8 +71,9 @@ class InputHandler {
                 : game.audiohandler.volumecontrol("up"); //else up
         }
         if (bindings.pause.includes(key) && !e.repeat){
-            if (game.pauseDat.pauseCD == 0) {
-                if (!game.pauseDat.gamePaused) {
+            const data = game.pauseDat;
+            if (data.pauseCD == 0) {
+                if (!data.gamePaused) {
                     game.queuePauseGame();
                 }
                 else {
@@ -80,7 +81,8 @@ class InputHandler {
                 }
             }
             else {
-                console.log("nope!");
+                game.audiohandler.play("pausecancelled", "sfx");
+                data.pauseCancelBorderFrames = 2;
             }
         }
     }
@@ -149,7 +151,7 @@ class AudioHandler {
         this.audioctx = new AudioContext();
         this.bgms = {};
         this.sfxs = {};
-        this.sfxlist = ["yummy", "invert", "shadow", "big", "ghost", "speedier", "bruh", "oneshot", "replay", "oneshotsuccess", "reveal", "collect", "hurt", "warp", "heartstart", "heartget", "truckdeath"];
+        this.sfxlist = ["yummy", "invert", "shadow", "big", "ghost", "speedier", "bruh", "oneshot", "replay", "oneshotsuccess", "reveal", "collect", "hurt", "warp", "heartstart", "heartget", "truckdeath", "pausecancelled"];
         this.currentbgm = null;
         this.savedBGMName = "";
         this.savedBGMOffset = 0;

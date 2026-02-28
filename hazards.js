@@ -502,7 +502,9 @@ class IConfetti extends Indicator {
     this.forceY += this.gravity;
     this.rotation += this.rotationspeed;
     this.rotation %= 360;
-    if (this.y > GAME.SCREEN.width + GLOBAL_OFFSET) { GAME.killMe(this); }
+    if (this.y > GAME.SCREEN.width + GLOBAL_OFFSET) { 
+      GAME.killMe(this); 
+    }
   }
 
   draw() {
@@ -692,7 +694,7 @@ class IShadowFraud extends Indicator {
 
 class IPop extends Indicator {
   constructor(posx, posy) {
-    super(posx, posy, 24, {RefreshOnFrame: true, zorder: 1});
+    super(posx, posy, 24, {refreshCondition: "refreshframe", zorder: 1});
   }
 
   draw(inc) {

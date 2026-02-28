@@ -108,9 +108,19 @@ class Artful {
 
     BorderColor() {
         const game = this.game;
-        if (game.healed != 0) { return `rgb(0,255,0)`; }
-        else if (game.hurtCooldown >= 170) { return `rgb(255,0,0)`; }
-        else { return `rgb(137,137,137)`; }
+        if (game.pauseDat.pauseCancelBorderFrames != 0) {
+            game.pauseDat.pauseCancelBorderFrames -= 1;
+            return `rgb(255, 255, 255)`;
+        }
+        else if (game.healed != 0) { 
+            return `rgb(0,255,0)`;
+         }
+        else if (game.hurtCooldown >= 170) { 
+            return `rgb(255,0,0)`; 
+        }
+        else { 
+            return `rgb(137,137,137)`; 
+        }
     }
 
     DrawHazardBase(posx, posy, width, height, color) {

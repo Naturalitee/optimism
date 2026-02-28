@@ -33,6 +33,7 @@ class AttackLoader {
         this.memory = 0;
         this.randmax = 9;
         this.randplus = 0;
+        this.s44redirect = "Left";
         this.s44cycle = 2;
         this.attackNum = 1;
         this.savedcoords = [1, 1];
@@ -41,6 +42,7 @@ class AttackLoader {
 
     clearboard() {
         const game = this.game;
+        this.s44redirect = "none";
         for (let i = game.Dangers.length - 1; i >= 0; i--) {
             if (!(game.Dangers[i] instanceof ShadowMe || game.Dangers[i] instanceof DCollect)) {
                 game.killMe(game.Dangers[i]);
@@ -97,7 +99,6 @@ class AttackLoader {
                 }
             }
             if (this.tick >= ATTACK_PATTERN_LENGTH) {
-                this.clearboard();
                 if (!TESTINGMODE) {
                     this.clearboard();
                     if (this.attackNum % 4 != 0) {
@@ -278,8 +279,13 @@ class AttackLoader {
                 } 
                 else if (Randint(4) + 1 < this.s44cycle) {
                     this.s44cycle = 0;
-                    let redirect = ["Up", "Down", "Left", "Right"][Randint(4)];
-                    game.Dangers.forEach(item => { if (item instanceof DMover) { item.direction = redirect; } });
+                    let redirect = this.chooseRedirect(firstmover.direction);
+                    this.s44redirect = redirect;
+                    game.Overlays.push(new ITextFlash(`${redirect.toUpperCase()}!`, game.Overlays))
+                }
+                else if (this.s44redirect != "none") {
+                    game.Dangers.forEach(item => { if (item instanceof DMover) { item.direction = this.s44redirect; } });
+                    this.s44redirect = "none";
                 } 
                 else {
                     this.s44cycle += 1;
@@ -306,6 +312,14 @@ class AttackLoader {
             default:
                 break;
         }
+    }
+
+    chooseRedirect(dir){
+        let redirect = ["Up", "Down", "Left", "Right"][Randint(4)];
+        if (redirect != dir) {
+            return redirect;
+        }
+        else return this.chooseRedirect(dir);
     }
 
     confettiexplosion() {

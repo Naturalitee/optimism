@@ -371,6 +371,7 @@ class GameHandler {
             unpauseTicksLeft: 4,
             isUnpauseTransition: false,
             loadingDone: false,
+            pauseCancelBorderFrames: 0,
             pauseCD: 8, //how many beats should we wait until we can pause again?
             pauseBeat: 1, //should only be 1 to 16 (2 bars)
             faceState: 0, //0 for o, 1 for >
@@ -599,7 +600,7 @@ class GameHandler {
             RemoveHeart();
             this.hp -= 1;
         }
-        if (this.hp <= 0) { this.gameOver(); }
+        if (this.hp <= 0 && !TESTINGMODE) { this.gameOver(); }
     }
 
     hpUp() {
