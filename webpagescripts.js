@@ -123,31 +123,33 @@ function DifficultyDesc(){
 
 //admin section
 function TestSetBPM(){
-    if (TESTINGMODE) {
+    if (!TESTINGMODE) {
+        console.log("nope");
+        return;
+    }
     const INPUT = document.getElementById('BPMinput');
     GAME.bpm = Number.isNaN(Number(INPUT.value)) ? 120 : Number(INPUT.value); 
     clearInterval(GAME.Interval);
     GAME.Interval = setInterval(GAME.BPMtick, ((60/GAME.bpm) / 2)*1000);
     GAME.inputhandler.ChangeDelay(GAME.bpm);
     console.log(INPUT.value);
-    }
-    else {
-        console.log("hey! you're gonna break my heart!");
-    }
 }
 
 function TestAttack(){
-    if (TESTINGMODE){
+    if (!TESTINGMODE) {
+        console.log("nope");
+        return;
+    }
     const INPUT = document.getElementById('attackinput');
     GAME.attacker.tick = 0;
     GAME.attacker.load(Number(INPUT.value), true);
-    }
-    else {
-        console.log("hey! you're gonna break my heart!");
-    }
 }
 
 function TestVariant(method){
+    if (!TESTINGMODE) {
+        console.log("nope");
+        return;
+    }
     if (method == "mix"){
         GAME.mixer.pickedvariant = document.getElementById(`variantpicker`).value;
         GAME.mixer.variantapplier();
