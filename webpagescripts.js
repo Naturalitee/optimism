@@ -61,6 +61,27 @@ function initalizeAdminPanel(){
 }
 
 
+function collapsibleToggle(target){
+    const content = target.nextElementSibling;
+    if (content.isAnimating) return;
+    content.isAnimating = true;
+    if (content.classList.contains("uncollapsed")) {
+        content.style.maxHeight = null;
+        content.addEventListener('transitionend', () => {
+                content.classList.toggle("uncollapsed");
+                content.isAnimating = false;
+        }, {once: true});
+    }
+    else {
+        content.classList.toggle("uncollapsed");
+        content.style.maxHeight = content.scrollHeight + "px";
+        content.addEventListener('transitionend', () => {
+                content.isAnimating = false;
+        }, {once: true});
+    }
+}
+
+
 //modifier section
 
 function ModifierExit(){

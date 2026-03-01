@@ -1,5 +1,5 @@
 //FOR TESTING 
-const TESTINGMODE = true;
+const TESTINGMODE = false;
 //FOR TESTING 
 
 //GAMEPLAY constants//

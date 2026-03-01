@@ -48,7 +48,7 @@ class DMover {
   constructor(posx, posy, direction, active) {
     this.x = posx;
     this.y = posy;
-    this.z = 2;
+    this.z = 3;
     this.direction = direction;
     this.grace = (active == null) ? 2 : 0;
     this.active = active ?? false;
@@ -191,7 +191,7 @@ class DCollect {
   constructor(posx, posy, duration) {
     this.x = posx;
     this.y = posy;
-    this.z = 4;
+    this.z = 2;
     this.duration = duration;
     this.active = true;
     this.behavior = this.behavior.bind(this);
@@ -239,7 +239,7 @@ class DStalker {
   constructor(posx, posy, duration) {
     this.x = posx;
     this.y = posy;
-    this.z = 3;
+    this.z = 4;
     this.duration = duration;
     this.active = false;
     this.animf = 0;

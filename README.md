@@ -12,16 +12,21 @@ If you really want to, you can play the game [here.](https://naturalitee.github.
 <h1 align="center">Current Version</h1>
 
 
-<p align="center">v1.2</p>
+<p align="center">v1.3</p>
 <pre>
-> Added 10 new attacks!
-> Adjusted most attacks that had Collectors.
-> Added an indicator for player warps.
-> Every 10 attacks, a heart now appears. Collecting that heart will replenish 1 health.
-> The max health is now 10.
-> Updated attack 40 a bit.
-> Updated the Help Tab underneath the main game. It now has two tabs for looking at hazards and the other mechanics of the game.
-> did some cleanup I guess that was cool.
+> Added 4 new audio tracks!
+> and also updated one of them lol
+> Added a hollow shell of a modifier screen! that comes next update!
+> Added an Up Next tab so you can anticipate what comes next!
+> Added a Pause Menu so you can finally play optimism by not playing optimism!
+> Added like 3 new hazards!
+> Added 4 new Mixups!
+> Reworked how some warps behaved!
+> Reworked the movement system. You can now hold down! WOAH!
+> Nerfed Attack 37 and 10, they were a bit too hard at faster speeds!
+> Nerfed Attack 24 and 43!
+> Added flashing text to attacks 38 and 44 for a bit more clarity!
+> Fixed a couple of bugs and added some more!
 </pre>
 
 
